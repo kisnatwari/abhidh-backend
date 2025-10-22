@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 2px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success {
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+        }
+        .delete-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>File Upload API Test</h1>
+        
+        <div class="form-group">
+            <label for="fileInput">Select a file to upload:</label>
+            <input type="file" id="fileInput" />
+            <button onclick="uploadFile()">Upload File</button>
+        </div>
+
+        <div id="uploadResult"></div>
+
+        <div class="delete-section">
+            <h2>Delete File</h2>
+            <div class="form-group">
+                <label for="pathInput">File path (e.g., uploads/my-file.pdf):</label>
+                <input type="text" id="pathInput" style="width: 100%; padding: 8px;" placeholder="uploads/filename.ext" />
+                <button onclick="deleteFile()" style="background-color: #dc3545; margin-top: 10px;">Delete File</button>
+            </div>
+            <div id="deleteResult"></div>
+        </div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('uploadResult');
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            resultDiv.innerHTML = '<p>Uploading...</p>';
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `<div class="result ${data.success ? 'success' : 'error'}">
+                    <strong>Response:</strong>\n${JSON.stringify(data, null, 2)}
+                </div>`;
+
+                if (data.success && data.data.path) {
+                    document.getElementById('pathInput').value = data.data.path;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">
+                    <strong>Error:</strong>\n${error.message}
+                </div>`;
+            }
+        }
+
+        async function deleteFile() {
+            const pathInput = document.getElementById('pathInput');
+            const resultDiv = document.getElementById('deleteResult');
+            
+            if (!pathInput.value) {
+                alert('Please enter a file path');
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Deleting...</p>';
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        path: pathInput.value
+                    })
+                });
+
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `<div class="result ${data.success ? 'success' : 'error'}">
+                    <strong>Response:</strong>\n${JSON.stringify(data, null, 2)}
+                </div>`;
+
+                if (data.success) {
+                    pathInput.value = '';
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">
+                    <strong>Error:</strong>\n${error.message}
+                </div>`;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+

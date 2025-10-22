@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Force a specific PHP for all artisan commands in this repo
+PHP="/c/laragon/bin/php/php-8.3.9/php.exe"
+
+# If you want, uncomment this to fail fast when PHP is missing:
+# [ -x "$PHP" ] || { echo "PHP not found at $PHP"; exit 1; }
+
+exec "$PHP" artisan "$@"

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Program;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 
 class ProgramController extends Controller
 {
@@ -48,35 +47,6 @@ class ProgramController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string'],
-                'category' => ['required', 'in:school,college,corporate,it,digital_marketing'],
-                'color' => ['nullable', 'string', 'max:50'],
-            ]);
-
-            $program = Program::create($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Program created successfully.',
-                'data' => $program,
-            ], 201);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-    }
 
     /**
      * Display the specified resource.
@@ -89,46 +59,4 @@ class ProgramController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Program $program): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string'],
-                'category' => ['required', 'in:school,college,corporate,it,digital_marketing'],
-                'color' => ['nullable', 'string', 'max:50'],
-            ]);
-
-            $program->update($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Program updated successfully.',
-                'data' => $program,
-            ]);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Program $program): JsonResponse
-    {
-        $program->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Program deleted successfully.',
-        ]);
-    }
 }

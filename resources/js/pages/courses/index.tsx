@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import courses from '@/routes/courses/index';
+import CourseController from '@/actions/App/Http/Controllers/CourseController';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -14,26 +14,17 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
-import AddCourseDialog from './components/add';
-import EditCourseDialog from './components/edit';
 import DeleteCourseDialog from './components/delete';
-import ViewCourseDialog from './components/view';
 
-const levelLabels = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-  all_levels: 'All Levels',
-};
-
-export type CourseRow = {
+type CourseRow = {
   id: number;
-  program_id: number;
-  program: { id: number; name: string };
-  name: string;
+  course_type: 'guided' | 'self_paced';
+  title: string;
   description: string | null;
   duration: string | null;
-  level: string;
+  target_audience: string | null;
+  program_id: number | null;
+  program: { id: number; name: string } | null;
   featured: boolean;
   enrollments_count: number;
   created_at: string;
@@ -53,29 +44,36 @@ type PageProps = {
   programs: { id: number; name: string }[];
 };
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Courses', href: courses.index().url }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Courses', href: CourseController.index().url }];
+
+const courseTypeLabels = {
+  guided: 'Guided',
+  self_paced: 'Self-Paced',
+};
+
+const courseTypeColors = {
+  guided: 'bg-blue-500',
+  self_paced: 'bg-green-500',
+};
 
 export default function CoursesIndex() {
   const { props } = usePage<PageProps>();
   const pager = props.courses;
-  const programOptions = props.programs;
 
   // read current query params (so refresh/back/links keep state)
   const initial = useMemo(() => {
     const s = new URL(window.location.href).searchParams;
     return {
       search: s.get('search') ?? '',
-      program: s.get('program') ?? 'all',
-      level: s.get('level') ?? 'all',
-      featured: s.get('featured') ?? 'all',
+      course_type: s.get('course_type') ?? 'all',
+      program_id: s.get('program_id') ?? 'all',
       perPage: s.get('per_page') ?? String(pager.per_page || 10),
     };
   }, [pager.per_page]);
 
   const [search, setSearch] = useState(initial.search);
-  const [program, setProgram] = useState(initial.program);
-  const [level, setLevel] = useState(initial.level);
-  const [featured, setFeatured] = useState(initial.featured);
+  const [courseType, setCourseType] = useState(initial.course_type);
+  const [programId, setProgramId] = useState(initial.program_id);
   const [perPage, setPerPage] = useState<string>(initial.perPage);
 
   // Debounce search a bit so it doesn't navigate every keystroke
@@ -83,18 +81,17 @@ export default function CoursesIndex() {
     const id = setTimeout(() => navigate(1), 350);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, program, level, featured, perPage]);
+  }, [search, courseType, programId, perPage]);
 
   const navigate = (page: number | null) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    if (program && program !== 'all') params.set('program', program);
-    if (level && level !== 'all') params.set('level', level);
-    if (featured && featured !== 'all') params.set('featured', featured);
+    if (courseType && courseType !== 'all') params.set('course_type', courseType);
+    if (programId && programId !== 'all') params.set('program_id', programId);
     if (perPage) params.set('per_page', perPage);
     if (page && page > 1) params.set('page', String(page));
 
-    const url = `${courses.index().url}${params.toString() ? `?${params}` : ''}`;
+    const url = `${CourseController.index().url}${params.toString() ? `?${params}` : ''}`;
     router.visit(url, { preserveScroll: true, preserveState: true });
   };
 
@@ -111,7 +108,9 @@ export default function CoursesIndex() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Courses</h1>
-          <AddCourseDialog programs={programOptions} />
+          <Button onClick={() => router.visit(CourseController.create().url)}>
+            New Course
+          </Button>
         </div>
 
         {/* Toolbar */}
@@ -123,40 +122,30 @@ export default function CoursesIndex() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-64"
             />
-            <Select value={program} onValueChange={setProgram}>
+            <Select value={courseType} onValueChange={setCourseType}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Program" />
+                <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Programs</SelectItem>
-                {programOptions.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={level} onValueChange={setLevel}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                {Object.entries(levelLabels).map(([key, label]) => (
+                <SelectItem value="all">All Types</SelectItem>
+                {Object.entries(courseTypeLabels).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={featured} onValueChange={setFeatured}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Featured" />
+            <Select value={programId} onValueChange={setProgramId}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Program" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="1">Featured</SelectItem>
-                <SelectItem value="0">Not Featured</SelectItem>
+                <SelectItem value="all">All Programs</SelectItem>
+                {props.programs.map((program) => (
+                  <SelectItem key={program.id} value={String(program.id)}>
+                    {program.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -181,11 +170,10 @@ export default function CoursesIndex() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[30%]">Name</TableHead>
+                <TableHead className="w-[30%]">Title</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Program</TableHead>
-                <TableHead>Level</TableHead>
                 <TableHead>Duration</TableHead>
-                <TableHead>Featured</TableHead>
                 <TableHead>Enrollments</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -194,36 +182,68 @@ export default function CoursesIndex() {
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                     No courses found.
                   </TableCell>
                 </TableRow>
               )}
 
-              {pager.data.map((c) => (
-                <TableRow key={c.id}>
+              {pager.data.map((course) => (
+                <TableRow key={course.id}>
                   <TableCell className="font-medium">
-                    <ViewCourseDialog course={c} trigger={<span className="hover:underline cursor-pointer">{c.name}</span>} />
-                  </TableCell>
-                  <TableCell>{c.program?.name || '—'}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{levelLabels[c.level as keyof typeof levelLabels]}</Badge>
-                  </TableCell>
-                  <TableCell>{c.duration || '—'}</TableCell>
-                  <TableCell>
-                    {c.featured ? (
-                      <Badge variant="default">Featured</Badge>
-                    ) : (
-                      <Badge variant="outline">No</Badge>
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-medium"
+                      onClick={() => router.visit(CourseController.show.url(course.id))}
+                    >
+                      {course.title}
+                    </Button>
+                    {course.featured && (
+                      <Badge variant="default" className="ml-2">Featured</Badge>
                     )}
                   </TableCell>
+
                   <TableCell>
-                    <Badge variant="outline">{c.enrollments_count}</Badge>
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        'text-white',
+                        courseTypeColors[course.course_type]
+                      )}
+                    >
+                      {courseTypeLabels[course.course_type]}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{new Date(c.created_at).toLocaleDateString()}</TableCell>
+
+                  <TableCell>
+                    {course.program ? (
+                      <span>{course.program.name}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    {course.duration || <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+
+                  <TableCell>
+                    <Badge variant="outline">{course.enrollments_count} enrollments</Badge>
+                  </TableCell>
+
+                  <TableCell>
+                    {new Date(course.created_at).toLocaleDateString()}
+                  </TableCell>
+
                   <TableCell className="text-right space-x-2">
-                    <EditCourseDialog course={c} programs={programOptions} />
-                    <DeleteCourseDialog course={c} />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.visit(CourseController.edit.url(course.id))}
+                    >
+                      Edit
+                    </Button>
+                    <DeleteCourseDialog course={course} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -294,3 +314,4 @@ export default function CoursesIndex() {
     </AppLayout>
   );
 }
+

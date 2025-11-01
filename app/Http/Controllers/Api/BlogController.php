@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Storage;
 
 class BlogController extends Controller
 {
@@ -50,45 +48,6 @@ class BlogController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'title' => ['required', 'string', 'max:255'],
-                'content' => ['required', 'string'],
-                'category' => ['nullable', 'string', 'max:255'],
-                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            ]);
-
-            $blog = Blog::create([
-                'title' => $validated['title'],
-                'content' => $validated['content'],
-                'category' => $validated['category'],
-            ]);
-
-            // Handle image upload
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('blogs', 'public');
-                $blog->update(['image_path' => $imagePath]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Blog created successfully.',
-                'data' => $blog->fresh(),
-            ], 201);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-    }
 
     /**
      * Display the specified resource.
@@ -101,66 +60,4 @@ class BlogController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Blog $blog): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'title' => ['required', 'string', 'max:255'],
-                'content' => ['required', 'string'],
-                'category' => ['nullable', 'string', 'max:255'],
-                'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            ]);
-
-            $blog->update([
-                'title' => $validated['title'],
-                'content' => $validated['content'],
-                'category' => $validated['category'],
-            ]);
-
-            // Handle image upload
-            if ($request->hasFile('image')) {
-                // Delete old image if exists
-                if ($blog->image_path) {
-                    Storage::disk('public')->delete($blog->image_path);
-                }
-                
-                $imagePath = $request->file('image')->store('blogs', 'public');
-                $blog->update(['image_path' => $imagePath]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Blog updated successfully.',
-                'data' => $blog->fresh(),
-            ]);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Blog $blog): JsonResponse
-    {
-        // Delete image if exists
-        if ($blog->image_path) {
-            Storage::disk('public')->delete($blog->image_path);
-        }
-
-        $blog->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Blog deleted successfully.',
-        ]);
-    }
 }

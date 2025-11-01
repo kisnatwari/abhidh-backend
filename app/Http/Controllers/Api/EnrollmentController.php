@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Enrollment;
-use App\Models\Course;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -17,15 +16,13 @@ class EnrollmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Enrollment::with(['user', 'course.program']);
+        $query = Enrollment::with(['user']);
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%');
-            })->orWhereHas('course', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -65,23 +62,10 @@ class EnrollmentController extends Controller
         try {
             $validated = $request->validate([
                 'user_id' => ['required', 'exists:users,id'],
-                'course_id' => ['required', 'exists:courses,id'],
                 'enrollment_date' => ['nullable', 'date'],
                 'status' => ['required', 'in:active,completed,dropped'],
                 'is_paid' => ['nullable', 'boolean'],
             ]);
-
-            // Check if user is already enrolled in this course
-            $existingEnrollment = Enrollment::where('user_id', $validated['user_id'])
-                ->where('course_id', $validated['course_id'])
-                ->first();
-
-            if ($existingEnrollment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User is already enrolled in this course.',
-                ], 422);
-            }
 
             $validated['enrollment_date'] = $validated['enrollment_date'] ?? now();
             $validated['is_paid'] = (bool) ($validated['is_paid'] ?? false);
@@ -91,7 +75,7 @@ class EnrollmentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Enrollment created successfully.',
-                'data' => $enrollment->load(['user', 'course.program']),
+                'data' => $enrollment->load(['user']),
             ], 201);
 
         } catch (ValidationException $e) {
@@ -110,7 +94,7 @@ class EnrollmentController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $enrollment->load(['user', 'course.program']),
+            'data' => $enrollment->load(['user']),
         ]);
     }
 
@@ -122,24 +106,10 @@ class EnrollmentController extends Controller
         try {
             $validated = $request->validate([
                 'user_id' => ['required', 'exists:users,id'],
-                'course_id' => ['required', 'exists:courses,id'],
                 'enrollment_date' => ['nullable', 'date'],
                 'status' => ['required', 'in:active,completed,dropped'],
                 'is_paid' => ['nullable', 'boolean'],
             ]);
-
-            // Check if user is already enrolled in this course (excluding current enrollment)
-            $existingEnrollment = Enrollment::where('user_id', $validated['user_id'])
-                ->where('course_id', $validated['course_id'])
-                ->where('id', '!=', $enrollment->id)
-                ->first();
-
-            if ($existingEnrollment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User is already enrolled in this course.',
-                ], 422);
-            }
 
             $validated['is_paid'] = (bool) ($validated['is_paid'] ?? false);
 
@@ -148,7 +118,7 @@ class EnrollmentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Enrollment updated successfully.',
-                'data' => $enrollment->load(['user', 'course.program']),
+                'data' => $enrollment->load(['user']),
             ]);
 
         } catch (ValidationException $e) {
@@ -174,17 +144,15 @@ class EnrollmentController extends Controller
     }
 
     /**
-     * Get courses and users for enrollment selection.
+     * Get users for enrollment selection.
      */
     public function options(): JsonResponse
     {
-        $courses = Course::with('program')->select('id', 'name', 'program_id')->get();
         $users = User::select('id', 'name', 'email')->get();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'courses' => $courses,
                 'users' => $users,
             ],
         ]);

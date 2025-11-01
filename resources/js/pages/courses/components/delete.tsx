@@ -13,13 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Trash2, Loader2 } from 'lucide-react';
 
-export default function DeleteCourseDialog({ 
-    course, 
-    trigger 
-}: { 
-    course: any;
-    trigger?: React.ReactNode;
-}) {
+export default function DeleteCourseDialog({ course, trigger }: { course: any, trigger?: React.ReactNode }) {
     const [open, setOpen] = React.useState(false);
     const [processing, setProcessing] = React.useState(false);
 
@@ -45,7 +39,7 @@ export default function DeleteCourseDialog({
                 <DialogHeader>
                     <DialogTitle>Delete Course</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to delete "{course.name}"? This will also delete all associated enrollments. This action cannot be undone.
+                        Are you sure you want to delete "{course.title}"? This will also delete all associated enrollments. This action cannot be undone.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0">
@@ -63,5 +57,4 @@ export default function DeleteCourseDialog({
         </Dialog>
     );
 }
-
 

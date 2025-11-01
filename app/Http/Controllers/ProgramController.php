@@ -13,8 +13,7 @@ class ProgramController extends Controller
      */
     public function index()
     {
-        $programs = Program::withCount('courses')
-            ->latest()
+        $programs = Program::latest()
             ->paginate(10)
             ->withQueryString();
 
@@ -55,7 +54,6 @@ class ProgramController extends Controller
      */
     public function show(Program $program)
     {
-        $program->load('courses');
         return Inertia::render('programs/show', [
             'program' => $program,
         ]);

@@ -24,5 +24,10 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        // Seed courses with proper data for both course types
+        $this->call([
+            CourseSeeder::class,
+        ]);
     }
 }

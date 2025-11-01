@@ -12,15 +12,22 @@ class Course extends Model
     use HasFactory;
 
     protected $fillable = [
-        'program_id',
-        'name',
+        'course_type',
+        'title',
         'description',
         'duration',
-        'level',
+        'target_audience',
+        'key_learning_objectives',
+        'syllabus',
+        'topics',
+        'program_id',
         'featured',
     ];
 
     protected $casts = [
+        'syllabus' => 'array',
+        'topics' => 'array',
+        'key_learning_objectives' => 'array',
         'featured' => 'boolean',
     ];
 
@@ -34,16 +41,12 @@ class Course extends Model
         return $this->hasMany(Enrollment::class);
     }
 
-    public function getLevelLabelAttribute(): string
+    public function getCourseTypeLabelAttribute(): string
     {
-        return match($this->level) {
-            'beginner' => 'Beginner',
-            'intermediate' => 'Intermediate',
-            'advanced' => 'Advanced',
-            'all_levels' => 'All Levels',
-            default => ucfirst($this->level),
+        return match($this->course_type) {
+            'guided' => 'Guided Course',
+            'self_paced' => 'Self-Paced Course',
+            default => ucfirst($this->course_type),
         };
     }
 }
-
-

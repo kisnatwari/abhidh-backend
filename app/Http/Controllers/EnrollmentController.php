@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Enrollment;
-use App\Models\Course;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,17 +14,15 @@ class EnrollmentController extends Controller
      */
     public function index()
     {
-        $enrollments = Enrollment::with(['user', 'course.program'])
+        $enrollments = Enrollment::with(['user'])
             ->latest('enrollment_date')
             ->paginate(10)
             ->withQueryString();
 
-        $courses = Course::with('program')->select('id', 'name', 'program_id')->get();
         $users = User::select('id', 'name', 'email')->get();
 
         return Inertia::render('enrollments/index', [
             'enrollments' => $enrollments,
-            'courses' => $courses,
             'users' => $users,
         ]);
     }
@@ -45,20 +42,10 @@ class EnrollmentController extends Controller
     {
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
-            'course_id' => ['required', 'exists:courses,id'],
             'enrollment_date' => ['nullable', 'date'],
             'status' => ['required', 'in:active,completed,dropped'],
             'is_paid' => ['nullable', 'boolean'],
         ]);
-
-        // Check if user is already enrolled in this course
-        $existingEnrollment = Enrollment::where('user_id', $validated['user_id'])
-            ->where('course_id', $validated['course_id'])
-            ->first();
-
-        if ($existingEnrollment) {
-            return back()->withErrors(['user_id' => 'User is already enrolled in this course.']);
-        }
 
         $validated['enrollment_date'] = $validated['enrollment_date'] ?? now();
         $validated['is_paid'] = (bool) ($validated['is_paid'] ?? false);
@@ -75,7 +62,7 @@ class EnrollmentController extends Controller
      */
     public function show(Enrollment $enrollment)
     {
-        $enrollment->load(['user', 'course.program']);
+        $enrollment->load(['user']);
         return Inertia::render('enrollments/show', [
             'enrollment' => $enrollment,
         ]);
@@ -86,13 +73,11 @@ class EnrollmentController extends Controller
      */
     public function edit(Enrollment $enrollment)
     {
-        $enrollment->load(['user', 'course.program']);
-        $courses = Course::with('program')->select('id', 'name', 'program_id')->get();
+        $enrollment->load(['user']);
         $users = User::select('id', 'name', 'email')->get();
         
         return Inertia::render('enrollments/edit', [
             'enrollment' => $enrollment,
-            'courses' => $courses,
             'users' => $users,
         ]);
     }
@@ -104,21 +89,10 @@ class EnrollmentController extends Controller
     {
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
-            'course_id' => ['required', 'exists:courses,id'],
             'enrollment_date' => ['nullable', 'date'],
             'status' => ['required', 'in:active,completed,dropped'],
             'is_paid' => ['nullable', 'boolean'],
         ]);
-
-        // Check if user is already enrolled in this course (excluding current enrollment)
-        $existingEnrollment = Enrollment::where('user_id', $validated['user_id'])
-            ->where('course_id', $validated['course_id'])
-            ->where('id', '!=', $enrollment->id)
-            ->first();
-
-        if ($existingEnrollment) {
-            return back()->withErrors(['user_id' => 'User is already enrolled in this course.']);
-        }
 
         $validated['is_paid'] = (bool) ($validated['is_paid'] ?? false);
 

@@ -1,8 +1,35 @@
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import {
+    BookOpen,
+    BookOpenCheck,
+    FileText,
+    GraduationCap,
+    Users,
+    UsersRound,
+    Images,
+    UserCheck,
+    Clock,
+    TrendingUp,
+    CheckCircle2,
+    AlertCircle,
+    ArrowRight,
+    Calendar,
+    BarChart3,
+} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import BlogController from '@/actions/App/Http/Controllers/BlogController';
+import CourseController from '@/actions/App/Http/Controllers/CourseController';
+import ProgramController from '@/actions/App/Http/Controllers/ProgramController';
+import EnrollmentController from '@/actions/App/Http/Controllers/EnrollmentController';
+import TeamController from '@/actions/App/Http/Controllers/TeamController';
+import TrainerController from '@/actions/App/Http/Controllers/TrainerController';
+import GalleryController from '@/actions/App/Http/Controllers/GalleryController';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -11,25 +38,474 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+type DashboardStats = {
+    total_blogs: number;
+    published_blogs: number;
+    total_courses: number;
+    guided_courses: number;
+    self_paced_courses: number;
+    total_programs: number;
+    total_enrollments: number;
+    verified_enrollments: number;
+    pending_verification: number;
+    total_trainers: number;
+    total_teams: number;
+    total_galleries: number;
+    total_users: number;
+};
+
+type RecentItem = {
+    id: number;
+    [key: string]: any;
+};
+
+type PageProps = {
+    stats: DashboardStats;
+    recent_pending_enrollments: RecentItem[];
+    recent_enrollments: RecentItem[];
+    recent_blogs: RecentItem[];
+    recent_courses: RecentItem[];
+    enrollments_by_month: { month: string; count: number }[];
+    popular_courses: RecentItem[];
+};
+
 export default function Dashboard() {
+    const { props } = usePage<PageProps>();
+    const { stats, recent_pending_enrollments, recent_enrollments, recent_blogs, recent_courses, enrollments_by_month, popular_courses } = props;
+
+    const StatCard = ({
+        title,
+        value,
+        description,
+        icon: Icon,
+        iconColor,
+        trend,
+    }: {
+        title: string;
+        value: string | number;
+        description?: string;
+        icon: any;
+        iconColor: string;
+        trend?: string;
+    }) => (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className={`h-4 w-4 ${iconColor}`} />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                {description && (
+                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                )}
+                {trend && (
+                    <div className="flex items-center text-xs text-muted-foreground mt-2">
+                        <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                        {trend}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+
+    const maxEnrollments = enrollments_by_month.length > 0
+        ? Math.max(...enrollments_by_month.map(e => e.count))
+        : 1;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+            <div className="flex flex-col gap-6 p-6">
+                {/* Header */}
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Welcome back! Here's what's happening with your platform.
+                    </p>
                     </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+
+                {/* Stats Grid */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        title="Total Courses"
+                        value={stats.total_courses}
+                        description={`${stats.guided_courses} guided, ${stats.self_paced_courses} self-paced`}
+                        icon={BookOpenCheck}
+                        iconColor="text-blue-500"
+                    />
+                    <StatCard
+                        title="Total Enrollments"
+                        value={stats.total_enrollments}
+                        description={`${stats.verified_enrollments} verified`}
+                        icon={UserCheck}
+                        iconColor="text-green-500"
+                    />
+                    <StatCard
+                        title="Pending Verification"
+                        value={stats.pending_verification}
+                        description="Payment screenshots awaiting review"
+                        icon={Clock}
+                        iconColor="text-orange-500"
+                    />
+                    <StatCard
+                        title="Published Blogs"
+                        value={`${stats.published_blogs} / ${stats.total_blogs}`}
+                        description="Blog posts"
+                        icon={FileText}
+                        iconColor="text-purple-500"
+                    />
                     </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
+
+                {/* Additional Stats */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        title="Programs"
+                        value={stats.total_programs}
+                        icon={GraduationCap}
+                        iconColor="text-indigo-500"
+                    />
+                    <StatCard
+                        title="Trainers"
+                        value={stats.total_trainers}
+                        icon={Users}
+                        iconColor="text-pink-500"
+                    />
+                    <StatCard
+                        title="Team Members"
+                        value={stats.total_teams}
+                        icon={UsersRound}
+                        iconColor="text-cyan-500"
+                    />
+                    <StatCard
+                        title="Galleries"
+                        value={stats.total_galleries}
+                        icon={Images}
+                        iconColor="text-yellow-500"
+                    />
                 </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+
+                {/* Main Content Grid */}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+                    {/* Enrollment Chart */}
+                    <Card className="col-span-4">
+                        <CardHeader>
+                            <CardTitle>Enrollments Over Time</CardTitle>
+                            <CardDescription>Last 6 months enrollment activity</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {enrollments_by_month.length > 0 ? (
+                                <div className="space-y-4">
+                                    <div className="flex items-end gap-2 h-[200px]">
+                                        {enrollments_by_month.map((item, index) => (
+                                            <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                                                <div className="flex-1 w-full flex items-end">
+                                                    <div
+                                                        className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-colors cursor-pointer"
+                                                        style={{
+                                                            height: `${(item.count / maxEnrollments) * 100}%`,
+                                                            minHeight: item.count > 0 ? '4px' : '0',
+                                                        }}
+                                                        title={`${item.month}: ${item.count} enrollments`}
+                                                    />
+                                                </div>
+                                                <div className="text-xs text-muted-foreground text-center -rotate-45 origin-top-left whitespace-nowrap">
+                                                    {item.month.split(' ')[0]}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                        {enrollments_by_month.map((item, index) => (
+                                            <div key={index} className="text-center">
+                                                {item.count}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                                    <div className="text-center">
+                                        <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                        <p>No enrollment data yet</p>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Pending Verifications */}
+                    <Card className="col-span-3">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Pending Verifications</CardTitle>
+                                <CardDescription>
+                                    {recent_pending_enrollments.length} payment(s) waiting
+                                </CardDescription>
+                            </div>
+                            <Badge variant="destructive" className="text-xs">
+                                {stats.pending_verification}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent>
+                            {recent_pending_enrollments.length > 0 ? (
+                                <div className="space-y-3">
+                                    {recent_pending_enrollments.map((enrollment) => (
+                                        <div
+                                            key={enrollment.id}
+                                            className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                                        >
+                                            <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium truncate">
+                                                    {enrollment.user_name}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground truncate">
+                                                    {enrollment.course_title}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    {enrollment.submitted_at}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <Link href={EnrollmentController.index().url}>
+                                        <Button variant="outline" className="w-full mt-2" size="sm">
+                                            View All
+                                            <ArrowRight className="h-3 w-3 ml-2" />
+                                        </Button>
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">All clear! No pending verifications</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Popular Courses */}
+                    <Card className="col-span-4">
+                        <CardHeader>
+                            <CardTitle>Popular Courses</CardTitle>
+                            <CardDescription>Top courses by enrollment count</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {popular_courses.length > 0 ? (
+                                <div className="space-y-3">
+                                    {popular_courses.map((course, index) => (
+                                        <div
+                                            key={course.id}
+                                            className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                                                    {index + 1}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">{course.title}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {course.program_name}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Badge variant="secondary">
+                                                {course.enrollments_count} enrollment{course.enrollments_count !== 1 ? 's' : ''}
+                                            </Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <BookOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">No courses yet</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent Enrollments */}
+                    <Card className="col-span-3">
+                        <CardHeader>
+                            <CardTitle>Recent Enrollments</CardTitle>
+                            <CardDescription>Latest enrollment activity</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {recent_enrollments.length > 0 ? (
+                                <div className="space-y-3">
+                                    {recent_enrollments.map((enrollment) => (
+                                        <div
+                                            key={enrollment.id}
+                                            className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                                        >
+                                            <div className={`h-2 w-2 rounded-full mt-2 ${
+                                                enrollment.status === 'Verified'
+                                                    ? 'bg-green-500'
+                                                    : 'bg-orange-500'
+                                            }`} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium truncate">
+                                                    {enrollment.user_name}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground truncate">
+                                                    {enrollment.course_title}
+                                                </p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Badge
+                                                        variant={enrollment.status === 'Verified' ? 'default' : 'secondary'}
+                                                        className="text-xs"
+                                                    >
+                                                        {enrollment.status}
+                                                    </Badge>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {enrollment.enrollment_date}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <Link href={EnrollmentController.index().url}>
+                                        <Button variant="outline" className="w-full mt-2" size="sm">
+                                            View All
+                                            <ArrowRight className="h-3 w-3 ml-2" />
+                                        </Button>
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">No enrollments yet</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent Blogs */}
+                    <Card className="col-span-3">
+                        <CardHeader>
+                            <CardTitle>Recent Blogs</CardTitle>
+                            <CardDescription>Latest blog posts</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {recent_blogs.length > 0 ? (
+                                <div className="space-y-3">
+                                    {recent_blogs.map((blog) => (
+                                        <div
+                                            key={blog.id}
+                                            className="p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                                        >
+                                            <p className="text-sm font-medium line-clamp-2">{blog.title}</p>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <Badge
+                                                    variant={blog.is_published ? 'default' : 'secondary'}
+                                                    className="text-xs"
+                                                >
+                                                    {blog.is_published ? 'Published' : 'Draft'}
+                                                </Badge>
+                                                {blog.option && (
+                                                    <Badge variant="outline" className="text-xs">
+                                                        {blog.option}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {blog.created_at}
+                                            </p>
+                                        </div>
+                                    ))}
+                                    <Link href={BlogController.index().url}>
+                                        <Button variant="outline" className="w-full mt-2" size="sm">
+                                            View All
+                                            <ArrowRight className="h-3 w-3 ml-2" />
+                                        </Button>
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">No blogs yet</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent Courses */}
+                    <Card className="col-span-4">
+                        <CardHeader>
+                            <CardTitle>Recent Courses</CardTitle>
+                            <CardDescription>Newly added courses</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {recent_courses.length > 0 ? (
+                                <div className="grid gap-3 md:grid-cols-2">
+                                    {recent_courses.map((course) => (
+                                        <div
+                                            key={course.id}
+                                            className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                                        >
+                                            <p className="text-sm font-medium">{course.title}</p>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <Badge
+                                                    variant={course.course_type === 'guided' ? 'default' : 'secondary'}
+                                                    className="text-xs"
+                                                >
+                                                    {course.course_type === 'guided' ? 'Guided' : 'Self-Paced'}
+                                                </Badge>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {course.program_name}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {course.created_at}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <BookOpenCheck className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">No courses yet</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
+
+                {/* Quick Links */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Quick Links</CardTitle>
+                        <CardDescription>Navigate to important sections</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <Link href={EnrollmentController.index().url}>
+                                <Button variant="outline" className="w-full justify-start">
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Manage Enrollments
+                                </Button>
+                            </Link>
+                            <Link href={CourseController.index().url}>
+                                <Button variant="outline" className="w-full justify-start">
+                                    <BookOpenCheck className="h-4 w-4 mr-2" />
+                                    Manage Courses
+                                </Button>
+                            </Link>
+                            <Link href={ProgramController.index().url}>
+                                <Button variant="outline" className="w-full justify-start">
+                                    <GraduationCap className="h-4 w-4 mr-2" />
+                                    Manage Programs
+                                </Button>
+                            </Link>
+                            <Link href={BlogController.index().url}>
+                                <Button variant="outline" className="w-full justify-start">
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Manage Blogs
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
     );

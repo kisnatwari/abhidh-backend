@@ -87,16 +87,21 @@ export default function EditBlogDialog({ blog, trigger }: { blog: any, trigger?:
                                 <InputError message={errors.title} />
                             </div>
 
-                            {/* Category */}
+                            {/* Option */}
                             <div className="grid gap-2">
-                                <Label htmlFor="category">Category</Label>
-                                <Input
-                                    id="category"
-                                    name="category"
-                                    defaultValue={blog.category || ''}
-                                    placeholder="e.g. Tech, Lifestyle"
-                                />
-                                <InputError message={errors.category} />
+                                <Label htmlFor="option">Option</Label>
+                                <select
+                                    id="option"
+                                    name="option"
+                                    defaultValue={blog.option || ''}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="">Select an option</option>
+                                    <option value="Abhidh">Abhidh</option>
+                                    <option value="Abhidh Creative">Abhidh Creative</option>
+                                    <option value="Abhidh Academy">Abhidh Academy</option>
+                                </select>
+                                <InputError message={errors.option} />
                             </div>
 
                             {/* Cover Image */}

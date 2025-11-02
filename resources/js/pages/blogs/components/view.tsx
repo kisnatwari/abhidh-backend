@@ -31,7 +31,7 @@ export default function ViewBlogDialog({ blog, trigger }: { blog: any, trigger?:
                         <img src={blog.image_url} alt={blog.title} className="w-full max-h-64 object-cover rounded border" />
                     )}
                     <div>
-                        <strong>Category:</strong> {blog.category || '—'}
+                        <strong>Option:</strong> {blog.option || '—'}
                     </div>
                     <div>
                         <strong>Status:</strong> {blog.is_published ? 'Published' : 'Draft'}

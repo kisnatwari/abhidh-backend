@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Program;
+use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -15,6 +16,16 @@ class CourseController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Try to get authenticated user (optional authentication)
+        $user = null;
+        if ($request->bearerToken()) {
+            try {
+                $user = $request->user('sanctum');
+            } catch (\Exception $e) {
+                // Ignore auth errors for optional authentication
+            }
+        }
+        
         $query = Course::with(['program']);
 
         // Search functionality
@@ -44,9 +55,37 @@ class CourseController extends Controller
         $perPage = $request->get('per_page', 10);
         $courses = $query->latest()->paginate($perPage);
 
+        // Transform courses to hide content for unenrolled users
+        $transformedCourses = $courses->items();
+        
+        foreach ($transformedCourses as $course) {
+            if ($course->course_type === 'self_paced') {
+                $isEnrolled = $user && Enrollment::where('user_id', $user->id)
+                    ->where('course_id', $course->id)
+                    ->where('payment_verified', true)
+                    ->exists();
+                
+                if (!$isEnrolled && $course->topics) {
+                    // Remove content from each topic, but keep all other fields
+                    // (description, learnings, outcomes, topics, subtopics all remain)
+                    $topics = $course->topics;
+                    if (is_array($topics)) {
+                        $topics = array_map(function ($topic) {
+                            // Keep all fields except 'content'
+                            if (isset($topic['content'])) {
+                                unset($topic['content']);
+                            }
+                            return $topic;
+                        }, $topics);
+                        $course->setAttribute('topics', $topics);
+                    }
+                }
+            }
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $courses->items(),
+            'data' => $transformedCourses,
             'pagination' => [
                 'current_page' => $courses->currentPage(),
                 'last_page' => $courses->lastPage(),
@@ -62,11 +101,47 @@ class CourseController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Course $course): JsonResponse
+    public function show(Request $request, Course $course): JsonResponse
     {
+        // Try to get authenticated user (optional authentication)
+        $user = null;
+        if ($request->bearerToken()) {
+            try {
+                $user = $request->user('sanctum');
+            } catch (\Exception $e) {
+                // Ignore auth errors for optional authentication
+            }
+        }
+        
+        // Load relationships
+        $course->load(['program', 'enrollments.user']);
+        
+        // For self-paced courses, hide content if user is not enrolled
+        if ($course->course_type === 'self_paced') {
+            $isEnrolled = $user && Enrollment::where('user_id', $user->id)
+                ->where('course_id', $course->id)
+                ->where('payment_verified', true)
+                ->exists();
+            
+            if (!$isEnrolled && $course->topics) {
+                // Remove content from each topic, but keep all other fields
+                $topics = $course->topics;
+                if (is_array($topics)) {
+                    $topics = array_map(function ($topic) {
+                        // Keep all fields except 'content' (description, learnings, outcomes, topics, subtopics all remain)
+                        if (isset($topic['content'])) {
+                            unset($topic['content']);
+                        }
+                        return $topic;
+                    }, $topics);
+                    $course->setAttribute('topics', $topics);
+                }
+            }
+        }
+        
         return response()->json([
             'success' => true,
-            'data' => $course->load(['program', 'enrollments.user']),
+            'data' => $course,
         ]);
     }
 

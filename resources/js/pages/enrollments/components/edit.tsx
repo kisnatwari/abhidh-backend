@@ -29,14 +29,20 @@ export default function EditEnrollmentDialog({
     enrollment, 
     courses, 
     users, 
-    trigger 
+    trigger,
+    open: controlledOpen,
+    onOpenChange
 }: { 
     enrollment: any;
     courses: { id: number; name: string; program: { id: number; name: string } }[];
     users: { id: number; name: string; email: string }[];
     trigger?: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }) {
-    const [open, setOpen] = React.useState(false);
+    const [internalOpen, setInternalOpen] = React.useState(false);
+    const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+    const setOpen = onOpenChange || setInternalOpen;
     const [isPaid, setIsPaid] = React.useState(enrollment.is_paid || false);
     const [enrollmentDate, setEnrollmentDate] = React.useState(
         enrollment.enrollment_date ? new Date(enrollment.enrollment_date).toISOString().split('T')[0] : ''
@@ -55,9 +61,11 @@ export default function EditEnrollmentDialog({
                 setOpen(v);
             }}
         >
-            <DialogTrigger asChild>
-                {trigger ?? <Button variant="outline">Edit</Button>}
-            </DialogTrigger>
+            {trigger && (
+                <DialogTrigger asChild>
+                    {trigger}
+                </DialogTrigger>
+            )}
 
             <DialogContent className="sm:max-w-2xl">
                 <Form

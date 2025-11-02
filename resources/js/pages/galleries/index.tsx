@@ -30,6 +30,7 @@ type GalleryRow = {
   id: number;
   title: string;
   description: string | null;
+  option: string | null;
   photos: GalleryPhoto[];
   created_at: string;
 };
@@ -58,11 +59,13 @@ export default function GalleriesIndex() {
     const s = new URL(window.location.href).searchParams;
     return {
       search: s.get('search') ?? '',
+      option: s.get('option') ?? 'all',
       perPage: s.get('per_page') ?? String(pager.per_page || 10),
     };
   }, [pager.per_page]);
 
   const [search, setSearch] = useState(initial.search);
+  const [option, setOption] = useState<string>(initial.option);
   const [perPage, setPerPage] = useState<string>(initial.perPage);
 
   // Debounce search a bit so it doesn't navigate every keystroke
@@ -70,11 +73,12 @@ export default function GalleriesIndex() {
     const id = setTimeout(() => navigate(1), 350);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, perPage]);
+  }, [search, option, perPage]);
 
   const navigate = (page: number | null) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
+    if (option && option !== 'all') params.set('option', option);
     if (perPage) params.set('per_page', perPage);
     if (page && page > 1) params.set('page', String(page));
 
@@ -107,6 +111,20 @@ export default function GalleriesIndex() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-64"
             />
+            <Select
+              value={option}
+              onValueChange={setOption}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Options</SelectItem>
+                <SelectItem value="Abhidh">Abhidh</SelectItem>
+                <SelectItem value="Abhidh Creative">Abhidh Creative</SelectItem>
+                <SelectItem value="Abhidh Academy">Abhidh Academy</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-2">
@@ -132,6 +150,7 @@ export default function GalleriesIndex() {
                 <TableHead className="w-[200px]">Preview</TableHead>
                 <TableHead className="w-[30%]">Title</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Option</TableHead>
                 <TableHead>Photos</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -189,6 +208,9 @@ export default function GalleriesIndex() {
                     </div>
                   </TableCell>
 
+                  <TableCell>
+                    {g.option ? <Badge variant="outline">{g.option}</Badge> : '—'}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{g.photos.length} photos</Badge>
                   </TableCell>

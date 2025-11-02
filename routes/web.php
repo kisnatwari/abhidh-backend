@@ -6,6 +6,9 @@ use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -15,9 +18,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('blogs', BlogController::class)->except(['update']);
     Route::post('blogs/{blog}', [BlogController::class, 'update'])->name('blogs.update');
@@ -28,6 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('galleries', GalleryController::class)->except(['update']);
     Route::post('galleries/{gallery}', [GalleryController::class, 'update'])->name('galleries.update');
     
+    Route::resource('teams', TeamController::class)->except(['update']);
+    Route::post('teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+    
     Route::resource('programs', ProgramController::class)->except(['update']);
     Route::post('programs/{program}', [ProgramController::class, 'update'])->name('programs.update');
     
@@ -36,6 +40,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::resource('enrollments', EnrollmentController::class)->except(['update']);
     Route::post('enrollments/{enrollment}', [EnrollmentController::class, 'update'])->name('enrollments.update');
+    Route::post('enrollments/{enrollment}/verify', [EnrollmentController::class, 'verify'])->name('enrollments.verify');
+    Route::post('enrollments/{enrollment}/unverify', [EnrollmentController::class, 'unverify'])->name('enrollments.unverify');
+    
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 });
 
 require __DIR__.'/settings.php';

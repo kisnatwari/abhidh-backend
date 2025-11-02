@@ -13,12 +13,27 @@ class GalleryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $galleries = Gallery::with('photos')
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        $query = Gallery::with('photos');
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%')
+                  ->orWhere('option', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Option filter
+        if ($request->has('option') && $request->option && $request->option !== 'all') {
+            $query->where('option', $request->option);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 10);
+        $galleries = $query->latest()->paginate($perPage)->withQueryString();
 
         return Inertia::render('galleries/index', [
             'galleries' => $galleries,
@@ -41,6 +56,7 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'option' => ['nullable', 'in:Abhidh,Abhidh Creative,Abhidh Academy'],
             'photos' => ['required', 'array', 'min:1'],
             'photos.*' => ['image', 'max:2048'],
             'captions' => ['nullable', 'array'],
@@ -50,6 +66,7 @@ class GalleryController extends Controller
         $gallery = Gallery::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
+            'option' => $validated['option'] ?? null,
         ]);
 
         // Handle photo uploads
@@ -100,6 +117,7 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'option' => ['nullable', 'in:Abhidh,Abhidh Creative,Abhidh Academy'],
             'photos' => ['nullable', 'array'],
             'photos.*' => ['image', 'max:2048'],
             'captions' => ['nullable', 'array'],
@@ -114,6 +132,7 @@ class GalleryController extends Controller
         $gallery->update([
             'title' => $validated['title'],
             'description' => $validated['description'],
+            'option' => $validated['option'] ?? null,
         ]);
 
         // Update existing photos

@@ -23,8 +23,14 @@ class GalleryController extends Controller
         if ($request->has('search') && $request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+                  ->orWhere('description', 'like', '%' . $request->search . '%')
+                  ->orWhere('option', 'like', '%' . $request->search . '%');
             });
+        }
+
+        // Option filter
+        if ($request->has('option') && $request->option && $request->option !== 'all') {
+            $query->where('option', $request->option);
         }
 
         // Pagination

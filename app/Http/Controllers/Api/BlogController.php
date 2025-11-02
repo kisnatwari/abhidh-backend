@@ -21,13 +21,13 @@ class BlogController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
                   ->orWhere('content', 'like', '%' . $request->search . '%')
-                  ->orWhere('category', 'like', '%' . $request->search . '%');
+                  ->orWhere('option', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Category filter
-        if ($request->has('category') && $request->category && $request->category !== 'all') {
-            $query->where('category', $request->category);
+        // Option filter
+        if ($request->has('option') && $request->option && $request->option !== 'all') {
+            $query->where('option', $request->option);
         }
 
         // Pagination

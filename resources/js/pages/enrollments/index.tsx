@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import enrollments from '@/routes/enrollments';
+import CourseController from '@/actions/App/Http/Controllers/CourseController';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -14,9 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
-import AddEnrollmentDialog from './components/add';
-import EditEnrollmentDialog from './components/edit';
-import DeleteEnrollmentDialog from './components/delete';
+import EnrollmentActionsMenu from './components/actions-menu';
 import ViewEnrollmentDialog from './components/view';
 
 const statusLabels = {
@@ -38,12 +37,17 @@ export type EnrollmentRow = {
   user: { id: number; name: string; email: string };
   course: { 
     id: number; 
-    name: string; 
-    program: { id: number; name: string } 
-  };
+    title: string; 
+    program: { id: number; name: string } | null
+  } | null;
   enrollment_date: string;
   status: string;
   is_paid: boolean;
+  payment_screenshot_path: string | null;
+  payment_screenshot_url: string | null;
+  payment_verified: boolean;
+  payment_verified_at: string | null;
+  verified_by: { id: number; name: string } | null;
   created_at: string;
 };
 
@@ -117,8 +121,12 @@ export default function EnrollmentsIndex() {
       <div className="flex flex-col gap-4 p-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Enrollments</h1>
-          <AddEnrollmentDialog courses={courseOptions} users={userOptions} />
+          <div>
+            <h1 className="text-xl font-semibold">Enrollments</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Enrollments are created when users submit payment screenshots via API. Verify payments to auto-enroll users.
+            </p>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -175,19 +183,20 @@ export default function EnrollmentsIndex() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[25%]">Student</TableHead>
-                <TableHead className="w-[25%]">Course</TableHead>
+                <TableHead className="w-[20%]">Student</TableHead>
+                <TableHead className="w-[20%]">Course</TableHead>
                 <TableHead>Program</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Payment</TableHead>
+                <TableHead>Verification</TableHead>
                 <TableHead>Enrolled</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[50px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
                     No enrollments found.
                   </TableCell>
                 </TableRow>
@@ -210,11 +219,29 @@ export default function EnrollmentsIndex() {
                   </TableCell>
                   
                   <TableCell>
-                    <div className="font-medium">{e.course.name}</div>
+                    {e.course ? (
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto font-medium"
+                        onClick={() => {
+                          if (e.course) {
+                            router.visit(CourseController.show.url(e.course.id));
+                          }
+                        }}
+                      >
+                        {e.course.title}
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">N/A</span>
+                    )}
                   </TableCell>
                   
                   <TableCell>
-                    <Badge variant="outline">{e.course.program.name}</Badge>
+                    {e.course?.program ? (
+                      <Badge variant="outline">{e.course.program.name}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   
                   <TableCell>
@@ -235,19 +262,49 @@ export default function EnrollmentsIndex() {
                     ) : (
                       <Badge variant="outline">Unpaid</Badge>
                     )}
+                    {e.payment_screenshot_url && (
+                      <div className="mt-1">
+                        <a 
+                          href={e.payment_screenshot_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          View Screenshot
+                        </a>
+                      </div>
+                    )}
+                  </TableCell>
+                  
+                  <TableCell>
+                    {e.payment_verified ? (
+                      <Badge variant="secondary" className="text-white bg-green-600">
+                        Verified
+                      </Badge>
+                    ) : e.payment_screenshot_path ? (
+                      <Badge variant="secondary" className="text-white bg-yellow-600">
+                        Pending
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">No Screenshot</Badge>
+                    )}
+                    {e.verified_by && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        by {e.verified_by.name}
+                      </div>
+                    )}
                   </TableCell>
                   
                   <TableCell>
                     {new Date(e.enrollment_date).toLocaleDateString()}
                   </TableCell>
                   
-                  <TableCell className="text-right space-x-2">
-                    <EditEnrollmentDialog 
+                  <TableCell className="text-center">
+                    <EnrollmentActionsMenu 
                       enrollment={e} 
-                      courses={courseOptions} 
-                      users={userOptions} 
+                      courses={courseOptions}
+                      users={userOptions}
                     />
-                    <DeleteEnrollmentDialog enrollment={e} />
                   </TableCell>
                 </TableRow>
               ))}

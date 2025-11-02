@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\FileUploadController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\TeamController;
 
 // Public routes
 Route::prefix('auth')->group(function () {
@@ -26,6 +28,9 @@ Route::get('trainers/{trainer}', [TrainerController::class, 'show']);
 
 Route::get('galleries', [GalleryController::class, 'index']);
 Route::get('galleries/{gallery}', [GalleryController::class, 'show']);
+
+Route::get('teams', [TeamController::class, 'index']);
+Route::get('teams/{team}', [TeamController::class, 'show']);
 
 Route::get('programs', [ProgramController::class, 'index']);
 Route::get('programs/{program}', [ProgramController::class, 'show']);
@@ -51,4 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('enrollments', [EnrollmentController::class, 'index']);
     Route::get('enrollments/{enrollment}', [EnrollmentController::class, 'show']);
     Route::get('enrollments/options/list', [EnrollmentController::class, 'options']);
+
+    // Payment routes (protected, users can submit payment screenshots)
+    Route::post('payments/submit', [PaymentController::class, 'submitPayment']);
 });

@@ -12,13 +12,32 @@ class CourseController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::with(['program'])
-            ->withCount('enrollments')
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        $query = Course::with(['program'])
+            ->withCount('enrollments');
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Course type filter
+        if ($request->has('course_type') && $request->course_type && $request->course_type !== 'all') {
+            $query->where('course_type', $request->course_type);
+        }
+
+        // Program filter
+        if ($request->has('program_id') && $request->program_id && $request->program_id !== 'all') {
+            $query->where('program_id', $request->program_id);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 10);
+        $courses = $query->latest()->paginate($perPage)->withQueryString();
 
         $programs = Program::select('id', 'name')->get();
 

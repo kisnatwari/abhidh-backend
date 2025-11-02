@@ -16,12 +16,20 @@ class Enrollment extends Model
         'enrollment_date',
         'status',
         'is_paid',
+        'payment_screenshot_path',
+        'payment_verified',
+        'payment_verified_at',
+        'verified_by',
     ];
 
     protected $casts = [
         'enrollment_date' => 'datetime',
         'is_paid' => 'boolean',
+        'payment_verified' => 'boolean',
+        'payment_verified_at' => 'datetime',
     ];
+
+    protected $appends = ['payment_screenshot_url'];
 
     public function user(): BelongsTo
     {
@@ -33,6 +41,11 @@ class Enrollment extends Model
         return $this->belongsTo(Course::class);
     }
 
+    public function verifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match($this->status) {
@@ -41,6 +54,13 @@ class Enrollment extends Model
             'dropped' => 'Dropped',
             default => ucfirst($this->status),
         };
+    }
+
+    public function getPaymentScreenshotUrlAttribute(): ?string
+    {
+        return $this->payment_screenshot_path
+            ? \Storage::disk('public')->url($this->payment_screenshot_path)
+            : null;
     }
 }
 

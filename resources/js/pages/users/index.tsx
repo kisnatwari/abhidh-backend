@@ -1,6 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import blogs from '@/routes/blogs';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -8,26 +7,21 @@ import {
   Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
-import AddBlogDialog from './components/add';
-import EditBlogDialog from './components/edit';
-import DeleteBlogDialog from './components/delete';
-import ViewBlogDialog from './components/view';
+import ViewUserDialog from './components/view';
+import { Badge } from '@/components/ui/badge';
+import { UserCircle2 } from 'lucide-react';
 
-type BlogRow = {
+type UserRow = {
   id: number;
-  title: string;
-  option: string | null;
-  slug: string;
-  is_published: boolean;
-  published_at: string | null;
+  name: string;
+  email: string;
+  email_verified_at: string | null;
   created_at: string;
-  image_url: string | null; // needs model accessor or transformer
+  tokens_count: number;
 };
 
 type Paginator<T> = {
@@ -35,36 +29,30 @@ type Paginator<T> = {
   current_page: number;
   last_page: number;
   total: number;
-  per_page: number; // Laravel adds this
+  per_page: number;
   links: { url: string | null; label: string; active: boolean }[];
 };
 
 type PageProps = {
-  blogs: Paginator<BlogRow>;
-  // optional props your controller can pass back to keep UI state in sync
-  // filters?: { search?: string; status?: 'all'|'published'|'draft'; per_page?: string };
+  users: Paginator<UserRow>;
 };
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Blogs', href: blogs.index().url }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 
-export default function BlogsIndex() {
+export default function UsersIndex() {
   const { props } = usePage<PageProps>();
-  const pager = props.blogs;
+  const pager = props.users;
 
   // read current query params (so refresh/back/links keep state)
   const initial = useMemo(() => {
     const s = new URL(window.location.href).searchParams;
     return {
       search: s.get('search') ?? '',
-      status: (s.get('status') as 'all' | 'published' | 'draft' | null) ?? 'all',
-      option: s.get('option') ?? 'all',
       perPage: s.get('per_page') ?? String(pager.per_page || 10),
     };
   }, [pager.per_page]);
 
   const [search, setSearch] = useState(initial.search);
-  const [status, setStatus] = useState<'all' | 'published' | 'draft'>(initial.status);
-  const [option, setOption] = useState<string>(initial.option);
   const [perPage, setPerPage] = useState<string>(initial.perPage);
 
   // Debounce search a bit so it doesn't navigate every keystroke
@@ -72,17 +60,15 @@ export default function BlogsIndex() {
     const id = setTimeout(() => navigate(1), 350);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status, option, perPage]);
+  }, [search, perPage]);
 
   const navigate = (page: number | null) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    if (status && status !== 'all') params.set('status', status);
-    if (option && option !== 'all') params.set('option', option);
     if (perPage) params.set('per_page', perPage);
     if (page && page > 1) params.set('page', String(page));
 
-    const url = `${blogs.index().url}${params.toString() ? `?${params}` : ''}`;
+    const url = `/users${params.toString() ? `?${params}` : ''}`;
     router.visit(url, { preserveScroll: true, preserveState: true });
   };
 
@@ -93,51 +79,23 @@ export default function BlogsIndex() {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Blogs" />
+      <Head title="Users" />
 
       <div className="flex flex-col gap-4 p-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Blogs</h1>
-          <AddBlogDialog />
+          <h1 className="text-xl font-semibold">Users</h1>
         </div>
 
         {/* Toolbar */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Search title..."
+              placeholder="Search name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-64"
             />
-            <Select
-              value={status}
-              onValueChange={(v: 'all' | 'published' | 'draft') => setStatus(v)}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={option}
-              onValueChange={setOption}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Option" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Options</SelectItem>
-                <SelectItem value="Abhidh">Abhidh</SelectItem>
-                <SelectItem value="Abhidh Creative">Abhidh Creative</SelectItem>
-                <SelectItem value="Abhidh Academy">Abhidh Academy</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="flex items-center gap-2">
@@ -160,64 +118,57 @@ export default function BlogsIndex() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Image</TableHead>
-                <TableHead className="w-[40%]">Title</TableHead>
-                <TableHead>Option</TableHead>
+                <TableHead className="w-[80px]">Avatar</TableHead>
+                <TableHead className="w-[30%]">Name</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Published</TableHead>
+                <TableHead>API Tokens</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
-                    No blogs found.
+                    No users found.
                   </TableCell>
                 </TableRow>
               )}
 
-              {pager.data.map((b) => (
-                <TableRow key={b.id}>
+              {pager.data.map((user) => (
+                <TableRow key={user.id}>
                   <TableCell>
-                    {b.image_url ? (
-                      <img
-                        src={b.image_url}
-                        alt={b.title}
-                        className="h-12 w-16 rounded object-cover border"
-                      />
-                    ) : (
-                      <div className="h-12 w-16 rounded border bg-muted/50" />
-                    )}
+                    <div className="h-12 w-12 rounded-full border bg-muted/50 flex items-center justify-center">
+                      <UserCircle2 className="h-8 w-8 text-muted-foreground" />
+                    </div>
                   </TableCell>
 
                   <TableCell className="font-medium">
-                    <ViewBlogDialog blog={b} trigger={<span className="hover:underline cursor-pointer">{b.title}</span>} />
-                  </TableCell>
-                  <TableCell>
-                    {b.option || '—'}
+                    <ViewUserDialog user={user} trigger={<span className="hover:underline cursor-pointer">{user.name}</span>} />
                   </TableCell>
 
                   <TableCell>
-                    {b.is_published ? (
-                      <Badge variant="default">Published</Badge>
+                    {user.email}
+                  </TableCell>
+
+                  <TableCell>
+                    {user.email_verified_at ? (
+                      <Badge variant="secondary" className="text-white bg-green-600">
+                        Verified
+                      </Badge>
                     ) : (
-                      <Badge variant="secondary">Draft</Badge>
+                      <Badge variant="secondary" className="text-white bg-gray-500">
+                        Unverified
+                      </Badge>
                     )}
                   </TableCell>
 
                   <TableCell>
-                    {b.published_at ? format(new Date(b.published_at), 'PP') : '—'}
+                    <Badge variant="outline">{user.tokens_count} tokens</Badge>
                   </TableCell>
 
                   <TableCell>
-                    {b.created_at ? format(new Date(b.created_at), 'PP') : '—'}
-                  </TableCell>
-
-                  <TableCell className="text-right space-x-2">
-                    <EditBlogDialog blog={b} />
-                    <DeleteBlogDialog blog={b} />
+                    {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                 </TableRow>
               ))}
@@ -284,9 +235,8 @@ export default function BlogsIndex() {
             </div>
           </div>
         )}
-
-
       </div>
     </AppLayout>
   );
 }
+

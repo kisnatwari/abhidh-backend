@@ -13,25 +13,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Trash2, Loader2 } from 'lucide-react';
 
-export default function DeleteEnrollmentDialog({ 
-    enrollment, 
-    trigger,
-    open: controlledOpen,
-    onOpenChange
-}: { 
-    enrollment: any;
-    trigger?: React.ReactNode;
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-}) {
-    const [internalOpen, setInternalOpen] = React.useState(false);
-    const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-    const setOpen = onOpenChange || setInternalOpen;
+export default function DeleteTeamDialog({ team, trigger }: { team: any, trigger?: React.ReactNode }) {
+    const [open, setOpen] = React.useState(false);
     const [processing, setProcessing] = React.useState(false);
 
     const handleDelete = async () => {
         setProcessing(true);
-        router.delete(`/enrollments/${enrollment.id}`, {
+        router.delete(`/teams/${team.id}`, {
             onSuccess: () => setOpen(false),
             onFinish: () => setProcessing(false),
             preserveScroll: true,
@@ -40,16 +28,18 @@ export default function DeleteEnrollmentDialog({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            {trigger && (
-                <DialogTrigger asChild>
-                    {trigger}
-                </DialogTrigger>
-            )}
+            <DialogTrigger asChild>
+                {trigger ?? (
+                    <Button size="sm" variant="destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </Button>
+                )}
+            </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Delete Enrollment</DialogTitle>
+                    <DialogTitle>Delete Team Member</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to delete the enrollment for "{enrollment.user?.name}" in "{enrollment.course?.name}"? This action cannot be undone.
+                        Are you sure you want to delete {team.name}? This action cannot be undone.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0">
@@ -60,12 +50,11 @@ export default function DeleteEnrollmentDialog({
                     </DialogClose>
                     <Button type="button" variant="destructive" onClick={handleDelete} disabled={processing}>
                         {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Delete Enrollment
+                        Delete
                     </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 }
-
 

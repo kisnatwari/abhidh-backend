@@ -16,7 +16,7 @@ class EnrollmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Enrollment::with(['user']);
+        $query = Enrollment::with(['user', 'course.program']);
 
         // Search functionality
         if ($request->has('search') && $request->search) {
@@ -75,7 +75,7 @@ class EnrollmentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Enrollment created successfully.',
-                'data' => $enrollment->load(['user']),
+                'data' => $enrollment->load(['user', 'course.program']),
             ], 201);
 
         } catch (ValidationException $e) {
@@ -94,7 +94,7 @@ class EnrollmentController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $enrollment->load(['user']),
+            'data' => $enrollment->load(['user', 'course.program']),
         ]);
     }
 
@@ -118,7 +118,7 @@ class EnrollmentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Enrollment updated successfully.',
-                'data' => $enrollment->load(['user']),
+                'data' => $enrollment->load(['user', 'course.program']),
             ]);
 
         } catch (ValidationException $e) {

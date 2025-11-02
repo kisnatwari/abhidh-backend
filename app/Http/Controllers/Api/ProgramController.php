@@ -33,9 +33,15 @@ class ProgramController extends Controller
         $perPage = $request->get('per_page', 10);
         $programs = $query->latest()->paginate($perPage);
 
+        // Transform color field to hex code
+        $transformedItems = $programs->items()->map(function ($program) {
+            $program->color = $program->color_hex;
+            return $program;
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $programs->items(),
+            'data' => $transformedItems,
             'pagination' => [
                 'current_page' => $programs->currentPage(),
                 'last_page' => $programs->lastPage(),
@@ -53,9 +59,14 @@ class ProgramController extends Controller
      */
     public function show(Program $program): JsonResponse
     {
+        $program->load('courses');
+        
+        // Transform color field to hex code
+        $program->color = $program->color_hex;
+        
         return response()->json([
             'success' => true,
-            'data' => $program->load('courses'),
+            'data' => $program,
         ]);
     }
 

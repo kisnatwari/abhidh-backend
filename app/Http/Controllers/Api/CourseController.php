@@ -59,6 +59,11 @@ class CourseController extends Controller
         $transformedCourses = $courses->items();
         
         foreach ($transformedCourses as $course) {
+            // Transform program color to hex code if program exists
+            if ($course->program && $course->program->color) {
+                $course->program->color = $course->program->color_hex;
+            }
+            
             if ($course->course_type === 'self_paced') {
                 $isEnrolled = $user && Enrollment::where('user_id', $user->id)
                     ->where('course_id', $course->id)
@@ -115,6 +120,11 @@ class CourseController extends Controller
         
         // Load relationships
         $course->load(['program', 'enrollments.user']);
+        
+        // Transform program color to hex code if program exists
+        if ($course->program && $course->program->color) {
+            $course->program->color = $course->program->color_hex;
+        }
         
         // For self-paced courses, hide content if user is not enrolled
         if ($course->course_type === 'self_paced') {

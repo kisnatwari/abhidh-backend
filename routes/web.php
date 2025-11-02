@@ -9,6 +9,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ContactUsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -45,6 +46,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+    
+    Route::get('contact-us', [ContactUsController::class, 'index'])->name('contact-us.index');
+    Route::get('contact-us/{contactUs}', [ContactUsController::class, 'show'])->name('contact-us.show');
+    Route::post('contact-us/{contactUs}/reply', [ContactUsController::class, 'reply'])->name('contact-us.reply');
+    Route::delete('contact-us/{contactUs}', [ContactUsController::class, 'destroy'])->name('contact-us.destroy');
 });
 
 require __DIR__.'/settings.php';

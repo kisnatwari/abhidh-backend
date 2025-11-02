@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
+use App\Models\ContactUs;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Gallery;
@@ -35,6 +36,8 @@ class DashboardController extends Controller
             'total_teams' => Team::count(),
             'total_galleries' => Gallery::count(),
             'total_users' => User::count(),
+            'total_contacts' => ContactUs::count(),
+            'pending_contacts' => ContactUs::where('is_replied', false)->count(),
         ];
 
         // Recent enrollments with pending verification
@@ -131,6 +134,21 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Recent contact submissions
+        $recent_contacts = ContactUs::latest('created_at')
+            ->limit(5)
+            ->get()
+            ->map(function ($contact) {
+                return [
+                    'id' => $contact->id,
+                    'name' => $contact->name ?? 'N/A',
+                    'email' => $contact->email,
+                    'subject' => $contact->subject ?? 'No Subject',
+                    'is_replied' => $contact->is_replied,
+                    'created_at' => $contact->created_at->format('M d, Y H:i'),
+                ];
+            });
+
         return Inertia::render('dashboard', [
             'stats' => $stats,
             'recent_pending_enrollments' => $recent_pending_enrollments,
@@ -139,6 +157,7 @@ class DashboardController extends Controller
             'recent_courses' => $recent_courses,
             'enrollments_by_month' => $enrollments_by_month,
             'popular_courses' => $popular_courses,
+            'recent_contacts' => $recent_contacts,
         ]);
     }
 }

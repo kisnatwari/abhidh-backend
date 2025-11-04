@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactUs;
+use App\Mail\ContactNotificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class ContactUsController extends Controller
@@ -26,6 +29,16 @@ class ContactUsController extends Controller
             ]);
 
             $contact = ContactUs::create($validated);
+
+            // Send notification email to admin
+            try {
+                Mail::to('bcrypt81@gmail.com')->send(
+                    new ContactNotificationMail($contact)
+                );
+            } catch (\Exception $e) {
+                // Log error but don't fail the request if email fails
+                Log::error('Failed to send contact notification email: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,

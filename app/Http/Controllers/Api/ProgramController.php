@@ -34,10 +34,10 @@ class ProgramController extends Controller
         $programs = $query->latest()->paginate($perPage);
 
         // Transform color field to hex code
-        $transformedItems = $programs->items()->map(function ($program) {
+        $transformedItems = collect($programs->items())->map(function ($program) {
             $program->color = $program->color_hex;
             return $program;
-        });
+        })->values()->all();
 
         return response()->json([
             'success' => true,

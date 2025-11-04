@@ -8,6 +8,7 @@ use App\Models\Program;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class CourseController extends Controller
 {
@@ -20,7 +21,10 @@ class CourseController extends Controller
         $user = null;
         if ($request->bearerToken()) {
             try {
-                $user = $request->user('sanctum');
+                $token = PersonalAccessToken::findToken($request->bearerToken());
+                if ($token) {
+                    $user = $token->tokenable;
+                }
             } catch (\Exception $e) {
                 // Ignore auth errors for optional authentication
             }
@@ -65,10 +69,13 @@ class CourseController extends Controller
             }
             
             if ($course->course_type === 'self_paced') {
-                $isEnrolled = $user && Enrollment::where('user_id', $user->id)
-                    ->where('course_id', $course->id)
-                    ->where('payment_verified', true)
-                    ->exists();
+                $isEnrolled = false;
+                if ($user) {
+                    $isEnrolled = Enrollment::where('user_id', $user->id)
+                        ->where('course_id', $course->id)
+                        ->where('payment_verified', true)
+                        ->exists();
+                }
                 
                 if (!$isEnrolled && $course->topics) {
                     // Remove content from each topic, but keep all other fields
@@ -112,7 +119,11 @@ class CourseController extends Controller
         $user = null;
         if ($request->bearerToken()) {
             try {
-                $user = $request->user('sanctum');
+                $tokenString = $request->bearerToken();
+                $token = PersonalAccessToken::findToken($tokenString);
+                if ($token && $token->tokenable) {
+                    $user = $token->tokenable;
+                }
             } catch (\Exception $e) {
                 // Ignore auth errors for optional authentication
             }
@@ -127,11 +138,14 @@ class CourseController extends Controller
         }
         
         // For self-paced courses, hide content if user is not enrolled
+        $isEnrolled = false;
         if ($course->course_type === 'self_paced') {
-            $isEnrolled = $user && Enrollment::where('user_id', $user->id)
-                ->where('course_id', $course->id)
-                ->where('payment_verified', true)
-                ->exists();
+            if ($user) {
+                $isEnrolled = Enrollment::where('user_id', $user->id)
+                    ->where('course_id', $course->id)
+                    ->where('payment_verified', true)
+                    ->exists();
+            }
             
             if (!$isEnrolled && $course->topics) {
                 // Remove content from each topic, but keep all other fields

@@ -101,12 +101,8 @@ export default function RichTextEditor({
   }, [disabled, quill]);
 
   return (
-    <div className={cn('w-full rounded-md border bg-background overflow-hidden', className)}>
-      <div
-        ref={editorRef}
-        className="[&_.ql-toolbar]:sticky [&_.ql-toolbar]:top-0 [&_.ql-toolbar]:z-10"
-        style={{ minHeight: '300px' }}
-      />
+    <div className={cn('w-full', className)} style={{ marginBottom: '4rem' }}>
+      <div ref={editorRef} />
       {name && (
         <input
           type="hidden"

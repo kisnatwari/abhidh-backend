@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
         Route::post('refresh', [AuthController::class, 'refresh']);
+        Route::post('change-password', [AuthController::class, 'changePassword']);
     });
 
     // Enrollment routes (protected, read-only)

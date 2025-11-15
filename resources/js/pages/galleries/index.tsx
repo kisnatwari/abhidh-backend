@@ -17,6 +17,7 @@ import AddGalleryDialog from './components/add';
 import EditGalleryDialog from './components/edit';
 import DeleteGalleryDialog from './components/delete';
 import ViewGalleryDialog from './components/view';
+import { PlayCircle, Image as ImageIcon } from 'lucide-react';
 
 type GalleryPhoto = {
   id: number;
@@ -31,6 +32,8 @@ type GalleryRow = {
   title: string;
   description: string | null;
   option: string | null;
+  media_type: 'image_group' | 'youtube';
+  youtube_url: string | null;
   photos: GalleryPhoto[];
   created_at: string;
 };
@@ -151,7 +154,7 @@ export default function GalleriesIndex() {
                 <TableHead className="w-[30%]">Title</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Option</TableHead>
-                <TableHead>Photos</TableHead>
+                <TableHead>Media</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -159,7 +162,7 @@ export default function GalleriesIndex() {
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                     No galleries found.
                   </TableCell>
                 </TableRow>
@@ -168,26 +171,10 @@ export default function GalleriesIndex() {
               {pager.data.map((g) => (
                 <TableRow key={g.id}>
                   <TableCell>
-                    {g.photos.length > 0 ? (
-                      <div className="flex gap-1">
-                        {g.photos.slice(0, 3).map((photo, index) => (
-                          <img
-                            key={photo.id}
-                            src={photo.photo_url}
-                            alt={photo.caption || `Photo ${index + 1}`}
-                            className="h-12 w-12 rounded object-cover border"
-                          />
-                        ))}
-                        {g.photos.length > 3 && (
-                          <div className="h-12 w-12 rounded border bg-muted/50 flex items-center justify-center">
-                            <span className="text-xs text-muted-foreground">+{g.photos.length - 3}</span>
-                          </div>
-                        )}
-                      </div>
+                    {g.media_type === 'youtube' && g.youtube_url ? (
+                      <YoutubePreview url={g.youtube_url} />
                     ) : (
-                      <div className="h-12 w-12 rounded border bg-muted/50 flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">No Photos</span>
-                      </div>
+                      <MediaPreview photos={g.photos} />
                     )}
                   </TableCell>
 
@@ -212,7 +199,13 @@ export default function GalleriesIndex() {
                     {g.option ? <Badge variant="outline">{g.option}</Badge> : '—'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{g.photos.length} photos</Badge>
+                    {g.media_type === 'youtube' ? (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <PlayCircle className="h-3 w-3" /> Video
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">{g.photos.length} photos</Badge>
+                    )}
                   </TableCell>
 
                   <TableCell>
@@ -291,4 +284,73 @@ export default function GalleriesIndex() {
       </div>
     </AppLayout>
   );
+}
+
+function MediaPreview({ photos }: { photos: GalleryPhoto[] }) {
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="h-12 w-20 rounded border bg-muted/40 flex items-center justify-center text-muted-foreground">
+        <ImageIcon className="h-4 w-4" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-1">
+      {photos.slice(0, 3).map((photo, index) => (
+        <img
+          key={photo.id}
+          src={photo.photo_url}
+          alt={photo.caption || `Photo ${index + 1}`}
+          className="h-12 w-12 rounded object-cover border"
+        />
+      ))}
+      {photos.length > 3 && (
+        <div className="h-12 w-12 rounded border bg-muted/50 flex items-center justify-center">
+          <span className="text-xs text-muted-foreground">+{photos.length - 3}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function YoutubePreview({ url }: { url: string }) {
+  const videoId = extractYoutubeId(url);
+  const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
+
+  return (
+    <div className="relative h-12 w-20 overflow-hidden rounded border">
+      {thumbnail ? (
+        <img src={thumbnail} alt="YouTube thumbnail" className="h-full w-full object-cover" />
+      ) : (
+        <div className="h-full w-full bg-muted/40 flex items-center justify-center text-muted-foreground text-[10px]">
+          YouTube
+        </div>
+      )}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+        <PlayCircle className="h-5 w-5 text-white" />
+      </div>
+    </div>
+  );
+}
+
+function extractYoutubeId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === 'youtu.be') {
+      return parsed.pathname.replace('/', '') || null;
+    }
+
+    if (parsed.searchParams.has('v')) {
+      return parsed.searchParams.get('v');
+    }
+
+    if (parsed.pathname.startsWith('/embed/')) {
+      return parsed.pathname.split('/')[2] ?? null;
+    }
+  } catch (error) {
+    return null;
+  }
+
+  return null;
 }

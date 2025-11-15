@@ -16,13 +16,16 @@ class EnrollmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Enrollment::with(['user', 'course.program']);
+        $user = $request->user();
+        
+        $query = Enrollment::with(['user', 'course.program'])
+            ->where('user_id', $user->id);
 
         // Search functionality
         if ($request->has('search') && $request->search) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $query->whereHas('course', function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -40,9 +43,33 @@ class EnrollmentController extends Controller
         $perPage = $request->get('per_page', 10);
         $enrollments = $query->latest('enrollment_date')->paginate($perPage);
 
+        // Remove RTE content from self-paced course topics in list view
+        $transformedEnrollments = collect($enrollments->items())->map(function ($enrollment) {
+            if ($enrollment->course && $enrollment->course->course_type === 'self_paced' && $enrollment->course->topics) {
+                $course = $enrollment->course;
+                $topics = $course->topics;
+                if (is_array($topics)) {
+                    $topics = array_map(function ($topic) {
+                        if (isset($topic['content'])) {
+                            unset($topic['content']);
+                        }
+                        return $topic;
+                    }, $topics);
+                    $course->setAttribute('topics', $topics);
+                }
+            }
+            
+            // Transform program color to hex code if program exists
+            if ($enrollment->course && $enrollment->course->program && $enrollment->course->program->color) {
+                $enrollment->course->program->color = $enrollment->course->program->color_hex;
+            }
+            
+            return $enrollment;
+        })->values()->all();
+
         return response()->json([
             'success' => true,
-            'data' => $enrollments->items(),
+            'data' => $transformedEnrollments,
             'pagination' => [
                 'current_page' => $enrollments->currentPage(),
                 'last_page' => $enrollments->lastPage(),
@@ -90,11 +117,29 @@ class EnrollmentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Enrollment $enrollment): JsonResponse
+    public function show(Request $request, Enrollment $enrollment): JsonResponse
     {
+        $user = $request->user();
+        
+        // Ensure user can only view their own enrollment
+        if ($enrollment->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. You can only view your own enrollments.',
+            ], 403);
+        }
+        
+        // Load full course data with content
+        $enrollment->load(['user', 'course.program']);
+        
+        // Transform program color to hex code if program exists
+        if ($enrollment->course && $enrollment->course->program && $enrollment->course->program->color) {
+            $enrollment->course->program->color = $enrollment->course->program->color_hex;
+        }
+        
         return response()->json([
             'success' => true,
-            'data' => $enrollment->load(['user', 'course.program']),
+            'data' => $enrollment,
         ]);
     }
 

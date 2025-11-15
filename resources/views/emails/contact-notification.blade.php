@@ -27,6 +27,10 @@
             @if($contact->subject)
             <p><strong>Subject:</strong> {{ $contact->subject }}</p>
             @endif
+
+            @if($contact->source)
+            <p><strong>Source:</strong> {{ ucfirst($contact->source) }}</p>
+            @endif
             
             @if($contact->courses)
             <p><strong>Related Courses:</strong> {{ $contact->courses }}</p>

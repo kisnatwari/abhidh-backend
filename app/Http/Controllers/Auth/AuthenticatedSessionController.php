@@ -45,7 +45,17 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        if (!$user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+
+            return redirect()->route('verification.notice');
+        }
+
+        $defaultRedirect = $user->is_admin
+            ? route('dashboard', absolute: false)
+            : route('academy.dashboard', absolute: false);
+
+        return redirect()->intended($defaultRedirect);
     }
 
     /**

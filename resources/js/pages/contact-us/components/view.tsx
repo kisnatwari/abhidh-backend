@@ -61,19 +61,28 @@ export default function ViewContactDialog({
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Contact Submission</DialogTitle>
+                    <DialogTitle>Inquiry Details</DialogTitle>
                 </DialogHeader>
                 
                 <div className="space-y-4">
                     {/* Contact Information */}
                     <div className="grid gap-3">
                         <div>
+                            <Label className="text-xs text-muted-foreground">Source</Label>
+                            <p className="text-sm font-medium capitalize">{contact.source || '—'}</p>
+                        </div>
+                        <div>
                             <Label className="text-xs text-muted-foreground">Name</Label>
                             <p className="text-sm font-medium">{contact.name || '—'}</p>
                         </div>
                         <div>
                             <Label className="text-xs text-muted-foreground">Email</Label>
-                            <p className="text-sm font-medium">{contact.email}</p>
+                            <a
+                                className="text-sm block font-medium text-primary hover:underline"
+                                href={`mailto:${contact.email}`}
+                            >
+                                {contact.email}
+                            </a>
                         </div>
                         {contact.phone && (
                             <div>
@@ -108,6 +117,11 @@ export default function ViewContactDialog({
                                 <Label className="text-xs text-muted-foreground">Replied At</Label>
                                 <p className="text-sm font-medium">
                                     {new Date(contact.replied_at).toLocaleString()}
+                                    {contact.replied_at_human ? (
+                                        <span className="text-xs text-muted-foreground ml-2">
+                                            ({contact.replied_at_human})
+                                        </span>
+                                    ) : null}
                                 </p>
                                 {contact.replied_by && (
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -120,6 +134,11 @@ export default function ViewContactDialog({
                             <Label className="text-xs text-muted-foreground">Submitted</Label>
                             <p className="text-sm font-medium">
                                 {new Date(contact.created_at).toLocaleString()}
+                                {contact.created_at_human ? (
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                        ({contact.created_at_human})
+                                    </span>
+                                ) : null}
                             </p>
                         </div>
                     </div>

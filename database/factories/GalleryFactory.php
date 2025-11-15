@@ -14,6 +14,8 @@ class GalleryFactory extends Factory
         return [
             'title' => $this->faker->sentence(3),
             'description' => $this->faker->paragraphs(2, true),
+            'media_type' => 'image_group',
+            'youtube_url' => null,
         ];
     }
 }

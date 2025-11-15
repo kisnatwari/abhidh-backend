@@ -22,6 +22,7 @@ class ContactUsController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%')
+                  ->orWhere('source', 'like', '%' . $request->search . '%')
                   ->orWhere('subject', 'like', '%' . $request->search . '%')
                   ->orWhere('message', 'like', '%' . $request->search . '%');
             });
@@ -68,7 +69,7 @@ class ContactUsController extends Controller
 
         try {
             // Send email
-            Mail::to($contactUs->email)->send(
+            Mail::to($contactUs->email)->queue(
                 new ContactReplyMail($contactUs, $validated['reply_message'])
             );
 

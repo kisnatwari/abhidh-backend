@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 import EnrollmentActionsMenu from './components/actions-menu';
 import ViewEnrollmentDialog from './components/view';
 
@@ -186,7 +187,6 @@ export default function EnrollmentsIndex() {
                 <TableHead className="w-[20%]">Student</TableHead>
                 <TableHead className="w-[20%]">Course</TableHead>
                 <TableHead>Program</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Verification</TableHead>
                 <TableHead>Enrolled</TableHead>
@@ -220,17 +220,24 @@ export default function EnrollmentsIndex() {
                   
                   <TableCell>
                     {e.course ? (
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto font-medium"
-                        onClick={() => {
-                          if (e.course) {
-                            router.visit(CourseController.show.url(e.course.id));
-                          }
-                        }}
-                      >
-                        {e.course.title}
-                      </Button>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-left"
+                          onClick={() => router.visit(CourseController.show.url(e.course!.id))}
+                        >
+                          {e.course.title}
+                        </Button>
+                        <Badge 
+                          variant="secondary" 
+                          className={cn(
+                            'w-fit text-white',
+                            statusColors[e.status as keyof typeof statusColors]
+                          )}
+                        >
+                          {statusLabels[e.status as keyof typeof statusLabels]}
+                        </Badge>
+                      </div>
                     ) : (
                       <span className="text-muted-foreground">N/A</span>
                     )}
@@ -242,18 +249,6 @@ export default function EnrollmentsIndex() {
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
-                  </TableCell>
-                  
-                  <TableCell>
-                    <Badge 
-                      variant="secondary" 
-                      className={cn(
-                        'text-white',
-                        statusColors[e.status as keyof typeof statusColors]
-                      )}
-                    >
-                      {statusLabels[e.status as keyof typeof statusLabels]}
-                    </Badge>
                   </TableCell>
                   
                   <TableCell>
@@ -296,7 +291,14 @@ export default function EnrollmentsIndex() {
                   </TableCell>
                   
                   <TableCell>
-                    {new Date(e.enrollment_date).toLocaleDateString()}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">
+                        {new Date(e.enrollment_date).toLocaleString()}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(e.enrollment_date), { addSuffix: true })}
+                      </span>
+                    </div>
                   </TableCell>
                   
                   <TableCell className="text-center">

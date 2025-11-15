@@ -13,7 +13,16 @@ import type { BreadcrumbItem } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
 import ViewUserDialog from './components/view';
 import { Badge } from '@/components/ui/badge';
-import { UserCircle2 } from 'lucide-react';
+import { MoreVertical, ShieldCheck, ShieldOff, Trash2, UserCircle2 } from 'lucide-react';
+import InviteAdminDialog from './components/invite-admin-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type UserRow = {
   id: number;
@@ -35,6 +44,15 @@ type Paginator<T> = {
 
 type PageProps = {
   users: Paginator<UserRow>;
+  flash?: {
+    success?: string;
+    error?: string;
+  };
+  auth?: {
+    user?: {
+      id: number;
+    };
+  };
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
@@ -42,6 +60,8 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 export default function UsersIndex() {
   const { props } = usePage<PageProps>();
   const pager = props.users;
+  const flash = props.flash;
+  const authUserId = props.auth?.user?.id ?? null;
 
   // read current query params (so refresh/back/links keep state)
   const initial = useMemo(() => {
@@ -54,6 +74,7 @@ export default function UsersIndex() {
 
   const [search, setSearch] = useState(initial.search);
   const [perPage, setPerPage] = useState<string>(initial.perPage);
+  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
   // Debounce search a bit so it doesn't navigate every keystroke
   useEffect(() => {
@@ -72,6 +93,33 @@ export default function UsersIndex() {
     router.visit(url, { preserveScroll: true, preserveState: true });
   };
 
+  const handleVerify = (userId: number) => {
+    setActionLoadingId(userId);
+    router.post(`/users/${userId}/verify`, {}, {
+      preserveScroll: true,
+      onFinish: () => setActionLoadingId(null),
+    });
+  };
+
+  const handleUnverify = (userId: number) => {
+    setActionLoadingId(userId);
+    router.post(`/users/${userId}/unverify`, {}, {
+      preserveScroll: true,
+      onFinish: () => setActionLoadingId(null),
+    });
+  };
+
+  const handleDelete = (userId: number) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+    setActionLoadingId(userId);
+    router.delete(`/users/${userId}`, {
+      preserveScroll: true,
+      onFinish: () => setActionLoadingId(null),
+    });
+  };
+
   const goTo = (url: string | null) => {
     if (!url) return;
     router.visit(url, { preserveScroll: true, preserveState: true });
@@ -83,9 +131,24 @@ export default function UsersIndex() {
 
       <div className="flex flex-col gap-4 p-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-semibold">Users</h1>
+          <InviteAdminDialog />
         </div>
+
+        {flash?.success && (
+          <Alert variant="default" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+            <AlertTitle className="font-semibold">Success</AlertTitle>
+            <AlertDescription>{flash.success}</AlertDescription>
+          </Alert>
+        )}
+
+        {flash?.error && (
+          <Alert variant="destructive">
+            <AlertTitle className="font-semibold">Email could not be sent</AlertTitle>
+            <AlertDescription>{flash.error}</AlertDescription>
+          </Alert>
+        )}
 
         {/* Toolbar */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -124,12 +187,13 @@ export default function UsersIndex() {
                 <TableHead>Status</TableHead>
                 <TableHead>API Tokens</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                     No users found.
                   </TableCell>
                 </TableRow>
@@ -169,6 +233,41 @@ export default function UsersIndex() {
 
                   <TableCell>
                     {new Date(user.created_at).toLocaleDateString()}
+                  </TableCell>
+
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open actions">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => handleVerify(user.id)}
+                          disabled={actionLoadingId === user.id || !!user.email_verified_at}
+                        >
+                          <ShieldCheck className="mr-2 h-4 w-4" />
+                          Mark as verified
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleUnverify(user.id)}
+                          disabled={actionLoadingId === user.id || !user.email_verified_at}
+                        >
+                          <ShieldOff className="mr-2 h-4 w-4" />
+                          Remove verification
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(user.id)}
+                          disabled={actionLoadingId === user.id || authUserId === user.id}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete user
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

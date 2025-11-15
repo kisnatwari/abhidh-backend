@@ -2,14 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\EnrollmentVerifiedMail;
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
-use App\Models\Course;
+use App\Services\Enrollment\EnrollmentProgressService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class EnrollmentController extends Controller
 {
+    public function __construct(
+        protected EnrollmentProgressService $progressService,
+    ) {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -151,6 +159,8 @@ class EnrollmentController extends Controller
      */
     public function verify(Request $request, Enrollment $enrollment)
     {
+        $enrollment->loadMissing('user', 'course');
+
         $enrollment->update([
             'payment_verified' => true,
             'payment_verified_at' => now(),
@@ -159,6 +169,17 @@ class EnrollmentController extends Controller
             'status' => 'active',
             'enrollment_date' => now(),
         ]);
+
+        if ($enrollment->course && $enrollment->course->course_type === 'self_paced') {
+            $topics = $this->progressService->extractTopics($enrollment->course, includeContent: false);
+            $this->progressService->syncTopics($enrollment, $topics);
+        }
+
+        if ($enrollment->user && $enrollment->course) {
+            Mail::to($enrollment->user->email)->queue(
+                new EnrollmentVerifiedMail($enrollment->user, $enrollment->course, $enrollment)
+            );
+        }
 
         return redirect()
             ->route('enrollments.index')

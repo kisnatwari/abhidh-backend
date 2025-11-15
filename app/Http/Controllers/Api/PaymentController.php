@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Enrollment;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Enrollment\PaymentSubmissionService;
 
 class PaymentController extends Controller
 {
+    public function __construct(
+        private readonly PaymentSubmissionService $paymentSubmissionService,
+    ) {
+    }
+
     /**
      * Submit payment screenshot for a course enrollment
      */
@@ -24,43 +28,12 @@ class PaymentController extends Controller
         $user = $request->user();
 
         // Check if enrollment already exists
-        $enrollment = Enrollment::where('user_id', $user->id)
-            ->where('course_id', $validated['course_id'])
-            ->first();
-
-        // Handle file upload
-        if ($request->hasFile('payment_screenshot')) {
-            // Delete old screenshot if exists
-            if ($enrollment && $enrollment->payment_screenshot_path) {
-                Storage::disk('public')->delete($enrollment->payment_screenshot_path);
-            }
-
-            $path = $request->file('payment_screenshot')->store('payments', 'public');
-            $validated['payment_screenshot_path'] = $path;
-        }
-
-        // Create or update enrollment
-        if ($enrollment) {
-            // Update existing enrollment
-            $enrollment->update([
-                'payment_screenshot_path' => $validated['payment_screenshot_path'],
-                'payment_verified' => false, // Reset verification when new screenshot is uploaded
-                'payment_verified_at' => null,
-                'verified_by' => null,
-                'is_paid' => false,
-            ]);
-        } else {
-            // Create new enrollment
-            $enrollment = Enrollment::create([
-                'user_id' => $user->id,
-                'course_id' => $validated['course_id'],
-                'payment_screenshot_path' => $validated['payment_screenshot_path'],
-                'payment_verified' => false,
-                'is_paid' => false,
-                'status' => 'active',
-                'enrollment_date' => now(),
-            ]);
-        }
+        $course = Course::findOrFail($validated['course_id']);
+        $enrollment = $this->paymentSubmissionService->submit(
+            $user,
+            $course,
+            $request->file('payment_screenshot')
+        );
 
         return response()->json([
             'success' => true,

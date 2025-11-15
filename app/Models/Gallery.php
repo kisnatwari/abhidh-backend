@@ -14,6 +14,8 @@ class Gallery extends Model
         'title',
         'description',
         'option',
+        'media_type',
+        'youtube_url',
     ];
 
     public function photos(): HasMany

@@ -73,7 +73,7 @@ const mainNavItems: NavItem[] = [
         icon: UserCircle2
     },
     {
-        title: 'Contact Us',
+        title: 'Inquiries',
         href: '/contact-us',
         icon: MessageSquare
     }

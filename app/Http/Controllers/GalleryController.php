@@ -7,6 +7,8 @@ use App\Models\GalleryPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class GalleryController extends Controller
 {
@@ -56,30 +58,47 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'option' => ['nullable', 'in:Abhidh,Abhidh Creative,Abhidh Academy'],
-            'photos' => ['required', 'array', 'min:1'],
+            'option' => ['nullable', Rule::in(['Abhidh', 'Abhidh Creative', 'Abhidh Academy'])],
+            'media_type' => ['required', Rule::in(['image_group', 'youtube'])],
+            'photos' => [
+                'nullable',
+                'array',
+                'min:1',
+                Rule::requiredIf(fn () => $request->input('media_type') === 'image_group'),
+            ],
             'photos.*' => ['image', 'max:2048'],
             'captions' => ['nullable', 'array'],
             'captions.*' => ['nullable', 'string', 'max:255'],
+            'youtube_url' => [
+                'nullable',
+                'url',
+                Rule::requiredIf(fn () => $request->input('media_type') === 'youtube'),
+            ],
         ]);
 
         $gallery = Gallery::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
             'option' => $validated['option'] ?? null,
+            'media_type' => $validated['media_type'],
+            'youtube_url' => $validated['media_type'] === 'youtube' ? $validated['youtube_url'] : null,
         ]);
 
-        // Handle photo uploads
-        foreach ($validated['photos'] as $index => $photo) {
-            $path = $photo->store('galleries', 'public');
-            $caption = $validated['captions'][$index] ?? null;
-            
-            GalleryPhoto::create([
-                'gallery_id' => $gallery->id,
-                'photo_path' => $path,
-                'caption' => $caption,
-                'sort_order' => $index,
-            ]);
+        if ($validated['media_type'] === 'image_group') {
+            $photos = $request->file('photos', []);
+            $captions = $request->input('captions', []);
+
+            foreach ($photos as $index => $photo) {
+                $path = $photo->store('galleries', 'public');
+                $caption = $captions[$index] ?? null;
+
+                GalleryPhoto::create([
+                    'gallery_id' => $gallery->id,
+                    'photo_path' => $path,
+                    'caption' => $caption,
+                    'sort_order' => $index,
+                ]);
+            }
         }
 
         return redirect()
@@ -117,7 +136,8 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'option' => ['nullable', 'in:Abhidh,Abhidh Creative,Abhidh Academy'],
+            'option' => ['nullable', Rule::in(['Abhidh', 'Abhidh Creative', 'Abhidh Academy'])],
+            'media_type' => ['required', Rule::in(['image_group', 'youtube'])],
             'photos' => ['nullable', 'array'],
             'photos.*' => ['image', 'max:2048'],
             'captions' => ['nullable', 'array'],
@@ -127,50 +147,75 @@ class GalleryController extends Controller
             'existing_photos.*.caption' => ['nullable', 'string', 'max:255'],
             'deleted_photos' => ['nullable', 'array'],
             'deleted_photos.*' => ['exists:gallery_photos,id'],
+            'youtube_url' => [
+                'nullable',
+                'url',
+                Rule::requiredIf(fn () => $request->input('media_type') === 'youtube'),
+            ],
         ]);
 
         $gallery->update([
             'title' => $validated['title'],
             'description' => $validated['description'],
             'option' => $validated['option'] ?? null,
+            'media_type' => $validated['media_type'],
+            'youtube_url' => $validated['media_type'] === 'youtube' ? $validated['youtube_url'] : null,
         ]);
 
-        // Update existing photos
-        if (isset($validated['existing_photos'])) {
-            foreach ($validated['existing_photos'] as $photoData) {
-                GalleryPhoto::where('id', $photoData['id'])
-                    ->where('gallery_id', $gallery->id)
-                    ->update(['caption' => $photoData['caption']]);
-            }
-        }
+        $gallery->load('photos');
 
-        // Delete removed photos
-        if (isset($validated['deleted_photos'])) {
-            $photosToDelete = GalleryPhoto::whereIn('id', $validated['deleted_photos'])
-                ->where('gallery_id', $gallery->id)
-                ->get();
-            
-            foreach ($photosToDelete as $photo) {
+        if ($validated['media_type'] === 'youtube') {
+            // Remove all existing photos when switching to video mode
+            foreach ($gallery->photos as $photo) {
                 Storage::disk('public')->delete($photo->photo_path);
                 $photo->delete();
             }
+        } else {
+            // Update existing photos
+            if (isset($validated['existing_photos'])) {
+                foreach ($validated['existing_photos'] as $photoData) {
+                    GalleryPhoto::where('id', $photoData['id'])
+                        ->where('gallery_id', $gallery->id)
+                        ->update(['caption' => $photoData['caption']]);
+                }
+            }
+
+            // Delete removed photos
+            if (isset($validated['deleted_photos'])) {
+                $photosToDelete = GalleryPhoto::whereIn('id', $validated['deleted_photos'])
+                    ->where('gallery_id', $gallery->id)
+                    ->get();
+
+                foreach ($photosToDelete as $photo) {
+                    Storage::disk('public')->delete($photo->photo_path);
+                    $photo->delete();
+                }
+            }
+
+            // Add new photos
+            if (isset($validated['photos'])) {
+                $currentMaxOrder = $gallery->photos()->max('sort_order') ?? -1;
+                $photos = $request->file('photos', []);
+                $captions = $request->input('captions', []);
+
+                foreach ($photos as $index => $photo) {
+                    $path = $photo->store('galleries', 'public');
+                    $caption = $captions[$index] ?? null;
+
+                    GalleryPhoto::create([
+                        'gallery_id' => $gallery->id,
+                        'photo_path' => $path,
+                        'caption' => $caption,
+                        'sort_order' => $currentMaxOrder + $index + 1,
+                    ]);
+                }
+            }
         }
 
-        // Add new photos
-        if (isset($validated['photos'])) {
-            $currentMaxOrder = $gallery->photos()->max('sort_order') ?? -1;
-            
-            foreach ($validated['photos'] as $index => $photo) {
-                $path = $photo->store('galleries', 'public');
-                $caption = $validated['captions'][$index] ?? null;
-                
-                GalleryPhoto::create([
-                    'gallery_id' => $gallery->id,
-                    'photo_path' => $path,
-                    'caption' => $caption,
-                    'sort_order' => $currentMaxOrder + $index + 1,
-                ]);
-            }
+        if ($validated['media_type'] === 'image_group' && $gallery->photos()->count() === 0) {
+            throw ValidationException::withMessages([
+                'photos' => 'Please upload at least one photo for an image gallery.',
+            ]);
         }
 
         return redirect()

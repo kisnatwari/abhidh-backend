@@ -85,6 +85,44 @@ export default function Dashboard() {
     const { props } = usePage<PageProps>();
     const { stats, recent_pending_enrollments, recent_enrollments, recent_blogs, recent_courses, enrollments_by_month, popular_courses, recent_contacts } = props;
 
+    const quickLinks = [
+        {
+            href: EnrollmentController.index().url,
+            label: 'Manage Enrollments',
+            description: 'Verify payments and track progress',
+            icon: UserCheck,
+            accent: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+        },
+        {
+            href: CourseController.index().url,
+            label: 'Manage Courses',
+            description: 'Create and update course content',
+            icon: BookOpenCheck,
+            accent: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+        },
+        {
+            href: ProgramController.index().url,
+            label: 'Manage Programs',
+            description: 'Organize learning pathways',
+            icon: GraduationCap,
+            accent: 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
+        },
+        {
+            href: BlogController.index().url,
+            label: 'Manage Blogs',
+            description: 'Publish updates and articles',
+            icon: FileText,
+            accent: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+        },
+        {
+            href: '/contact-us',
+            label: 'Inquiries',
+            description: 'Reply to new inquiries',
+            icon: MessageSquare,
+            accent: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+        },
+    ];
+
     const StatCard = ({
         title,
         value,
@@ -494,52 +532,51 @@ export default function Dashboard() {
                     </Card>
                 </div>
 
-                {/* Quick Links */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Quick Links</CardTitle>
-                        <CardDescription>Navigate to important sections</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Link href={EnrollmentController.index().url}>
-                                <Button variant="outline" className="w-full justify-start">
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    Manage Enrollments
-                                </Button>
-                            </Link>
-                            <Link href={CourseController.index().url}>
-                                <Button variant="outline" className="w-full justify-start">
-                                    <BookOpenCheck className="h-4 w-4 mr-2" />
-                                    Manage Courses
-                                </Button>
-                            </Link>
-                            <Link href={ProgramController.index().url}>
-                                <Button variant="outline" className="w-full justify-start">
-                                    <GraduationCap className="h-4 w-4 mr-2" />
-                                    Manage Programs
-                                </Button>
-                            </Link>
-                            <Link href={BlogController.index().url}>
-                                <Button variant="outline" className="w-full justify-start">
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    Manage Blogs
-                                </Button>
-                            </Link>
-                            <Link href="/contact-us">
-                                <Button variant="outline" className="w-full justify-start">
-                                    <MessageSquare className="h-4 w-4 mr-2" />
-                                    Contact Submissions
-                                </Button>
-                            </Link>
+                {/* Quick Links - mobile only */}
+                <div className="md:hidden">
+                    <div className="rounded-3xl border border-primary/10 bg-linear-to-br from-primary/10 via-background to-background p-6 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <span className="text-xs font-semibold uppercase tracking-[0.35em] text-primary/70">
+                                    Quick actions
+                                </span>
+                                <h3 className="mt-2 text-lg font-semibold text-foreground">Jump into your workflow</h3>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Shortcuts to the tasks you manage most often
+                                </p>
+                            </div>
+                            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                                <ArrowRight className="h-5 w-5" />
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
 
-                {/* Recent Contact Submissions */}
+                        <div className="mt-6 space-y-3">
+                            {quickLinks.map(({ href, label, description, icon: Icon, accent }) => (
+                                <Link
+                                    key={label}
+                                    href={href}
+                                    className="block rounded-2xl border border-border/60 bg-card/90 p-4 shadow-[0_18px_40px_-25px_rgba(33,65,165,0.35)] transition-transform hover:-translate-y-0.5"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${accent}`}>
+                                            <Icon className="h-5 w-5" />
+                                        </span>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-semibold text-foreground">{label}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                                        </div>
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Recent Inquiries */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Recent Contact Submissions</CardTitle>
+                        <CardTitle>Recent Inquiries</CardTitle>
                         <CardDescription>Latest contact form submissions</CardDescription>
                     </CardHeader>
                     <CardContent>

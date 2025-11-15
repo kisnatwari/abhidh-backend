@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import RichTextEditor from '@/components/rich-text-editor';
-import { Image as ImageIcon, Loader2, X } from 'lucide-react';
+import { Image as ImageIcon, Loader2, X, Youtube } from 'lucide-react';
 
 type PhotoPreview = {
     file: File;
@@ -38,6 +38,8 @@ export default function EditGalleryDialog({ gallery, trigger }: { gallery: any, 
     const [deletedPhotos, setDeletedPhotos] = React.useState<number[]>([]);
     const [description, setDescription] = React.useState(gallery.description || '');
     const [hasExistingPhotoChanges, setHasExistingPhotoChanges] = React.useState(false);
+    const [mediaType, setMediaType] = React.useState<'image_group' | 'youtube'>(gallery.media_type || 'image_group');
+    const [youtubeUrl, setYoutubeUrl] = React.useState<string>(gallery.youtube_url || '');
 
     const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
         const files = Array.from(e.target.files || []);
@@ -88,6 +90,8 @@ export default function EditGalleryDialog({ gallery, trigger }: { gallery: any, 
         setDeletedPhotos([]);
         setDescription(gallery.description || '');
         setHasExistingPhotoChanges(false);
+        setMediaType(gallery.media_type || 'image_group');
+        setYoutubeUrl(gallery.youtube_url || '');
     };
 
     return (
@@ -165,144 +169,191 @@ export default function EditGalleryDialog({ gallery, trigger }: { gallery: any, 
                                 <InputError message={errors.option} />
                             </div>
 
-                            {/* Existing Photos */}
-                            {existingPhotos.length > 0 && (
-                                <div className="space-y-3">
-                                    <Label>Existing Photos</Label>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        {existingPhotos.map((photo) => (
-                                            <div key={photo.id} className="relative group">
-                                                <img
-                                                    src={photo.photo_url}
-                                                    alt={photo.caption || 'Gallery photo'}
-                                                    className="w-full h-24 object-cover rounded border"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    className="absolute -top-2 -right-2 h-6 w-6 p-0"
-                                                    onClick={() => removeExistingPhoto(photo.id)}
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </Button>
-                                                <Input
-                                                    placeholder="Caption (optional)"
-                                                    value={photo.caption || ''}
-                                                    onChange={(e) => updateExistingPhotoCaption(photo.id, e.target.value)}
-                                                    className="mt-2 text-xs"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Add New Photos */}
+                            {/* Media Type */}
                             <div className="grid gap-2">
-                                <Label htmlFor="photos">Add More Photos</Label>
-                                <div className="flex items-center gap-3">
-                                    <label
-                                        htmlFor="photos"
-                                        className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-                                    >
-                                        <ImageIcon className="h-4 w-4" />
-                                        Choose photos
-                                    </label>
-                                    <input
-                                        id="photos"
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                    />
-                                </div>
-                                <p className="text-xs text-muted-foreground">PNG/JPG up to 2MB each. Select multiple files.</p>
-                                <InputError message={errors.photos} />
-                            </div>
-
-                            {/* New Photo Previews */}
-                            {newPhotos.length > 0 && (
-                                <div className="space-y-3">
-                                    <Label>New Photo Previews</Label>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        {newPhotos.map((photo, index) => (
-                                            <div key={index} className="relative group">
-                                                <img
-                                                    src={photo.preview}
-                                                    alt={`Preview ${index + 1}`}
-                                                    className="w-full h-24 object-cover rounded border"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    className="absolute -top-2 -right-2 h-6 w-6 p-0"
-                                                    onClick={() => removeNewPhoto(index)}
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </Button>
-                                                <Input
-                                                    placeholder="Caption (optional)"
-                                                    value={photo.caption}
-                                                    onChange={(e) => updateNewPhotoCaption(index, e.target.value)}
-                                                    className="mt-2 text-xs"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Hidden inputs for form submission - only send if there are changes to existing photos */}
-                            {hasExistingPhotoChanges && existingPhotos.map((photo) => (
-                                <input
-                                    key={`existing-${photo.id}`}
-                                    type="hidden"
-                                    name={`existing_photos[${photo.id}][id]`}
-                                    value={photo.id}
-                                />
-                            ))}
-                            {hasExistingPhotoChanges && existingPhotos.map((photo) => (
-                                <input
-                                    key={`existing-caption-${photo.id}`}
-                                    type="hidden"
-                                    name={`existing_photos[${photo.id}][caption]`}
-                                    value={photo.caption || ''}
-                                />
-                            ))}
-                            {deletedPhotos.map((photoId) => (
-                                <input
-                                    key={`deleted-${photoId}`}
-                                    type="hidden"
-                                    name={`deleted_photos[]`}
-                                    value={photoId}
-                                />
-                            ))}
-                            {newPhotos.map((photo, index) => (
-                                <input
-                                    key={`photo-${index}`}
-                                    type="file"
-                                    name="photos[]"
-                                    style={{ display: 'none' }}
-                                    ref={(el) => {
-                                        if (el) {
-                                            const dataTransfer = new DataTransfer();
-                                            dataTransfer.items.add(photo.file);
-                                            el.files = dataTransfer.files;
+                                <Label htmlFor="media_type">Content Type</Label>
+                                <select
+                                    id="media_type"
+                                    name="media_type"
+                                    value={mediaType}
+                                    onChange={(event) => {
+                                        const value = event.target.value as 'image_group' | 'youtube';
+                                        setMediaType(value);
+                                        if (value === 'youtube') {
+                                            newPhotos.forEach((photo) => URL.revokeObjectURL(photo.preview));
+                                            setNewPhotos([]);
                                         }
                                     }}
-                                />
-                            ))}
-                            {newPhotos.map((photo, index) => (
-                                <input
-                                    key={`caption-${index}`}
-                                    type="hidden"
-                                    name={`captions[${index}]`}
-                                    value={photo.caption}
-                                />
-                            ))}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="image_group">Group of Images</option>
+                                    <option value="youtube">YouTube Video</option>
+                                </select>
+                                <InputError message={errors.media_type} />
+                            </div>
+
+                            {mediaType === 'youtube' ? (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="youtube_url">YouTube Video URL</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="youtube_url"
+                                            name="youtube_url"
+                                            type="url"
+                                            required
+                                            value={youtubeUrl}
+                                            onChange={(event) => setYoutubeUrl(event.target.value)}
+                                            placeholder="https://www.youtube.com/watch?v=..."
+                                        />
+                                        <Youtube className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Existing photos will be removed when switching to a video gallery.
+                                    </p>
+                                    <InputError message={errors.youtube_url} />
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Existing Photos */}
+                                    {existingPhotos.length > 0 && (
+                                        <div className="space-y-3">
+                                            <Label>Existing Photos</Label>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                {existingPhotos.map((photo) => (
+                                                    <div key={photo.id} className="relative group">
+                                                        <img
+                                                            src={photo.photo_url}
+                                                            alt={photo.caption || 'Gallery photo'}
+                                                            className="w-full h-24 object-cover rounded border"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                                                            onClick={() => removeExistingPhoto(photo.id)}
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </Button>
+                                                        <Input
+                                                            placeholder="Caption (optional)"
+                                                            value={photo.caption || ''}
+                                                            onChange={(e) => updateExistingPhotoCaption(photo.id, e.target.value)}
+                                                            className="mt-2 text-xs"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Add New Photos */}
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="photos">Add More Photos</Label>
+                                        <div className="flex items-center gap-3">
+                                            <label
+                                                htmlFor="photos"
+                                                className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
+                                            >
+                                                <ImageIcon className="h-4 w-4" />
+                                                Choose photos
+                                            </label>
+                                            <input
+                                                id="photos"
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">PNG/JPG up to 2MB each. Select multiple files.</p>
+                                        <InputError message={errors.photos} />
+                                    </div>
+
+                                    {/* New Photo Previews */}
+                                    {newPhotos.length > 0 && (
+                                        <div className="space-y-3">
+                                            <Label>New Photo Previews</Label>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                {newPhotos.map((photo, index) => (
+                                                    <div key={index} className="relative group">
+                                                        <img
+                                                            src={photo.preview}
+                                                            alt={`Preview ${index + 1}`}
+                                                            className="w-full h-24 object-cover rounded border"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                                                            onClick={() => removeNewPhoto(index)}
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </Button>
+                                                        <Input
+                                                            placeholder="Caption (optional)"
+                                                            value={photo.caption}
+                                                            onChange={(e) => updateNewPhotoCaption(index, e.target.value)}
+                                                            className="mt-2 text-xs"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Hidden inputs for form submission - only send if there are changes to existing photos */}
+                                    {hasExistingPhotoChanges && existingPhotos.map((photo) => (
+                                        <input
+                                            key={`existing-${photo.id}`}
+                                            type="hidden"
+                                            name={`existing_photos[${photo.id}][id]`}
+                                            value={photo.id}
+                                        />
+                                    ))}
+                                    {hasExistingPhotoChanges && existingPhotos.map((photo) => (
+                                        <input
+                                            key={`existing-caption-${photo.id}`}
+                                            type="hidden"
+                                            name={`existing_photos[${photo.id}][caption]`}
+                                            value={photo.caption || ''}
+                                        />
+                                    ))}
+                                    {deletedPhotos.map((photoId) => (
+                                        <input
+                                            key={`deleted-${photoId}`}
+                                            type="hidden"
+                                            name={`deleted_photos[]`}
+                                            value={photoId}
+                                        />
+                                    ))}
+                                    {newPhotos.map((photo, index) => (
+                                        <input
+                                            key={`photo-${index}`}
+                                            type="file"
+                                            name="photos[]"
+                                            style={{ display: 'none' }}
+                                            ref={(el) => {
+                                                if (el) {
+                                                    const dataTransfer = new DataTransfer();
+                                                    dataTransfer.items.add(photo.file);
+                                                    el.files = dataTransfer.files;
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                    {newPhotos.map((photo, index) => (
+                                        <input
+                                            key={`caption-${index}`}
+                                            type="hidden"
+                                            name={`captions[${index}]`}
+                                            value={photo.caption}
+                                        />
+                                    ))}
+                                </>
+                            )}
 
                             <DialogFooter className="gap-2 sm:gap-0">
                                 <DialogClose asChild>

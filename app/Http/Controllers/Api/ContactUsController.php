@@ -20,6 +20,7 @@ class ContactUsController extends Controller
     {
         try {
             $validated = $request->validate([
+                'source' => ['nullable', 'string', 'max:50'],
                 'email' => ['required', 'email', 'max:255'],
                 'message' => ['required', 'string', 'min:10'],
                 'name' => ['nullable', 'string', 'max:255'],
@@ -28,11 +29,14 @@ class ContactUsController extends Controller
                 'courses' => ['nullable', 'string', 'max:500'], // Can be comma-separated course IDs or names
             ]);
 
-            $contact = ContactUs::create($validated);
+            $contact = ContactUs::create(array_merge(
+                $validated,
+                ['source' => $validated['source'] ?? 'group']
+            ));
 
             // Send notification email to admin
             try {
-                Mail::to('bcrypt81@gmail.com')->send(
+                Mail::to('bcrypt81@gmail.com')->queue(
                     new ContactNotificationMail($contact)
                 );
             } catch (\Exception $e) {

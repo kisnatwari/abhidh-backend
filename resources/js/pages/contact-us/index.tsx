@@ -19,6 +19,7 @@ import DeleteContactDialog from './components/delete';
 
 type ContactRow = {
   id: number;
+  source: string;
   name: string | null;
   email: string;
   phone: string | null;
@@ -27,8 +28,10 @@ type ContactRow = {
   courses: string | null;
   is_replied: boolean;
   replied_at: string | null;
+  replied_at_human: string | null;
   replied_by: { id: number; name: string } | null;
   created_at: string;
+  created_at_human: string | null;
 };
 
 type Paginator<T> = {
@@ -44,7 +47,7 @@ type PageProps = {
   contacts: Paginator<ContactRow>;
 };
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Contact Us', href: '/contact-us' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Inquiries', href: '/contact-us' }];
 
 export default function ContactUsIndex() {
   const { props } = usePage<PageProps>();
@@ -89,12 +92,12 @@ export default function ContactUsIndex() {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Contact Us" />
+      <Head title="Inquiries" />
 
       <div className="flex flex-col gap-4 p-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Contact Us Submissions</h1>
+          <h1 className="text-xl font-semibold">Customer Inquiries</h1>
         </div>
 
         {/* Toolbar */}
@@ -141,6 +144,7 @@ export default function ContactUsIndex() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Source</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
@@ -153,7 +157,7 @@ export default function ContactUsIndex() {
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
                     No contact submissions found.
                   </TableCell>
                 </TableRow>
@@ -162,9 +166,21 @@ export default function ContactUsIndex() {
               {pager.data.map((contact) => (
                 <TableRow key={contact.id}>
                   <TableCell className="font-medium">
+                    <Badge variant="secondary">
+                      {contact.source ? contact.source.charAt(0).toUpperCase() + contact.source.slice(1) : '—'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">
                     {contact.name || '—'}
                   </TableCell>
-                  <TableCell>{contact.email}</TableCell>
+                  <TableCell>
+                    <a
+                      href={`mailto:${contact.email}`}
+                      className="text-primary hover:underline"
+                    >
+                      {contact.email}
+                    </a>
+                  </TableCell>
                   <TableCell>{contact.phone || '—'}</TableCell>
                   <TableCell>
                     {contact.subject ? (
@@ -181,7 +197,14 @@ export default function ContactUsIndex() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {new Date(contact.created_at).toLocaleDateString()}
+                    <div className="flex flex-col items-start">
+                      <span>{new Date(contact.created_at).toLocaleDateString()}</span>
+                      {contact.created_at_human ? (
+                        <span className="text-xs text-muted-foreground">
+                          {contact.created_at_human}
+                        </span>
+                      ) : null}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <ViewContactDialog contact={contact} />

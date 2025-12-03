@@ -40,6 +40,7 @@ export default function EditCourse() {
 
     const [courseType, setCourseType] = useState<'guided' | 'self_paced'>(course.course_type || 'guided');
     const [programId, setProgramId] = useState<string | undefined>(course.program_id ? String(course.program_id) : undefined);
+    const [price, setPrice] = useState<number | null>(course.price ? Math.round(course.price) : null);
     
     // Guided course state
     const [description, setDescription] = useState(course.description || '');
@@ -600,6 +601,24 @@ export default function EditCourse() {
                                 {/* Self-Paced Course Form */}
                                 {courseType === 'self_paced' && (
                                     <>
+                                        {/* Price */}
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="price">Price (Rs.)</Label>
+                                            <Input
+                                                id="price"
+                                                name="price"
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                placeholder="e.g., 5000"
+                                                value={price ?? ''}
+                                                onChange={(e) => setPrice(e.target.value ? Number(e.target.value) : null)}
+                                                className="max-w-md"
+                                            />
+                                            <p className="text-xs text-muted-foreground">Enter price in Nepali Rupees (no decimals)</p>
+                                            <InputError message={errors.price} />
+                                        </div>
+
                                         {/* Description */}
                                         <div className="grid gap-2">
                                             <Label htmlFor="description">Course Description</Label>

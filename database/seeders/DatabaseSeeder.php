@@ -28,6 +28,9 @@ class DatabaseSeeder extends Seeder
         // Seed courses with proper data for both course types
         $this->call([
             CourseSeeder::class,
+            ServiceSeeder::class,
+            TeamSeeder::class,
+            TrainerSeeder::class,
         ]);
     }
 }

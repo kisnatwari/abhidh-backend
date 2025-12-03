@@ -14,6 +14,7 @@ type Course = {
     title: string;
     description: string | null;
     duration: string | null;
+    price: number | null;
     target_audience: string | null;
     key_learning_objectives: string[] | null;
     syllabus: any[] | null;
@@ -201,6 +202,13 @@ export default function ShowCourse() {
                                         className="prose max-w-none text-sm overflow-x-auto break-words"
                                         dangerouslySetInnerHTML={{ __html: course.description }}
                                     />
+                                </div>
+                            )}
+
+                            {course.price && (
+                                <div>
+                                    <h4 className="font-semibold mb-1 text-sm text-muted-foreground">Price</h4>
+                                    <p className="text-lg font-bold text-primary">Rs. {Math.round(course.price).toLocaleString('en-US')}</p>
                                 </div>
                             )}
                             

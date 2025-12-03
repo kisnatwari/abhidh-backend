@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\TrainerController;
 use App\Http\Controllers\Api\GalleryController;
 use App\Http\Controllers\Api\ProgramController;
+use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\FileUploadController;
@@ -35,6 +36,9 @@ Route::get('teams/{team}', [TeamController::class, 'show']);
 
 Route::get('programs', [ProgramController::class, 'index']);
 Route::get('programs/{program}', [ProgramController::class, 'show']);
+
+Route::get('services', [ServiceController::class, 'index']);
+Route::get('services/{service:slug}', [ServiceController::class, 'show']);
 
 Route::get('courses', [CourseController::class, 'index']);
 Route::get('courses/{course}', [CourseController::class, 'show']);

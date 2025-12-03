@@ -52,6 +52,7 @@ export default function AddCourseDialog({
         title: '',
         program_id: null as number | null,
         featured: false,
+        price: null as number | null,
         // Guided course fields
         description: '',
         duration: '',
@@ -545,6 +546,23 @@ export default function AddCourseDialog({
                             {/* Self-Paced Course Form */}
                             {data.course_type === 'self_paced' && (
                                 <>
+                                    {/* Price */}
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="price">Price (Rs.)</Label>
+                                        <Input
+                                            id="price"
+                                            name="price"
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            placeholder="e.g., 5000"
+                                            value={data.price ?? ''}
+                                            onChange={(e) => setData('price', e.target.value ? Number(e.target.value) : null)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Enter price in Nepali Rupees (no decimals)</p>
+                                        <InputError message={errors.price} />
+                                    </div>
+
                                     {/* Topics Table */}
                                     <div className="grid gap-2">
                                         <Label>Topics</Label>

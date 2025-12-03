@@ -86,42 +86,78 @@ class PublicAcademyController extends Controller
         ]);
     }
 
-    public function courses(): Response
+    public function courses(Request $request): Response
     {
-        $programGroups = Program::withCount('courses')
-            ->with(['courses' => function ($query) {
-                $query->with('program')
-                    ->orderBy('title');
-            }])
-            ->orderBy('name')
-            ->get()
-            ->map(function (Program $program) {
-                $courses = $program->courses
-                    ->map(fn (Course $course) => $this->courseResource($course))
-                    ->filter()
-                    ->values();
+        $programId = $request->query('program_id');
 
-                if ($courses->isEmpty()) {
-                    return null;
-                }
+        // If program_id is provided, filter by that specific program
+        if ($programId) {
+            $programQuery = Program::withCount('courses')
+                ->with(['courses' => function ($query) {
+                    $query->with('program')
+                        ->orderBy('title');
+                }])
+                ->where('id', $programId)
+                ->orderBy('name');
 
-                return [
-                    'program' => $this->programResource($program),
-                    'courses' => $courses,
-                ];
-            })
-            ->filter()
-            ->values();
+            $programGroups = $programQuery->get()
+                ->map(function (Program $program) {
+                    $courses = $program->courses
+                        ->map(fn (Course $course) => $this->courseResource($course))
+                        ->filter()
+                        ->values();
 
-        $standaloneCourses = Course::with('program')
-            ->whereNull('program_id')
-            ->latest()
-            ->get()
-            ->map(fn (Course $course) => $this->courseResource($course));
+                    if ($courses->isEmpty()) {
+                        return null;
+                    }
+
+                    return [
+                        'program' => $this->programResource($program),
+                        'courses' => $courses,
+                    ];
+                })
+                ->filter()
+                ->values();
+
+            $standaloneCourses = collect(); // No standalone courses when filtering by program
+        } else {
+            // Default behavior: show all programs with their courses
+            $programGroups = Program::withCount('courses')
+                ->with(['courses' => function ($query) {
+                    $query->with('program')
+                        ->orderBy('title');
+                }])
+                ->orderBy('name')
+                ->get()
+                ->map(function (Program $program) {
+                    $courses = $program->courses
+                        ->map(fn (Course $course) => $this->courseResource($course))
+                        ->filter()
+                        ->values();
+
+                    if ($courses->isEmpty()) {
+                        return null;
+                    }
+
+                    return [
+                        'program' => $this->programResource($program),
+                        'courses' => $courses,
+                    ];
+                })
+                ->filter()
+                ->values();
+
+            $standaloneCourses = Course::with('program')
+                ->whereNull('program_id')
+                ->latest()
+                ->get()
+                ->map(fn (Course $course) => $this->courseResource($course));
+        }
 
         return Inertia::render('academy/courses/index', [
             'programGroups' => $programGroups,
             'standaloneCourses' => $standaloneCourses,
+            'selectedProgramId' => $programId ? (int) $programId : null,
         ]);
     }
 
@@ -289,6 +325,7 @@ class PublicAcademyController extends Controller
             'title' => $course->title,
             'description' => $course->description,
             'duration' => $course->duration,
+            'price' => $course->price ? (float) $course->price : null,
             'course_type' => $course->course_type,
             'course_type_label' => $course->course_type_label,
             'featured' => $course->featured,
@@ -366,6 +403,7 @@ class PublicAcademyController extends Controller
             'title' => $course->title,
             'description' => $course->description,
             'duration' => $course->duration,
+            'price' => $course->price ? (float) $course->price : null,
             'course_type' => $course->course_type,
             'course_type_label' => $course->course_type_label,
             'featured' => $course->featured,

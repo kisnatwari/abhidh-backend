@@ -146,9 +146,9 @@ const Programs = ({ programs }: ProgramsProps) => {
                                                 }}
                                                 asChild
                                             >
-                                                <Link href={`/academy/contact?program=${program.id}`}>
+                                                <Link href={`/academy/courses?program_id=${program.id}`}>
                                                     <span className="relative z-10 flex items-center justify-center gap-2">
-                                                        Collaborate on this program
+                                                        View Courses
                                                         <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/button:translate-x-1" />
                                                     </span>
                                                     <span

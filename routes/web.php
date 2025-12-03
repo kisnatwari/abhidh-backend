@@ -7,6 +7,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\UserController;
@@ -62,6 +63,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     
     Route::resource('programs', ProgramController::class)->except(['update']);
     Route::post('programs/{program}', [ProgramController::class, 'update'])->name('programs.update');
+    
+    Route::resource('services', ServiceController::class)->except(['update']);
+    Route::post('services/{service}', [ServiceController::class, 'update'])->name('services.update');
     
     Route::resource('courses', CourseController::class)->except(['update']);
     Route::post('courses/{course}', [CourseController::class, 'update'])->name('courses.update');

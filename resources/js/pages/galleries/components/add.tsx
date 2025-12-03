@@ -24,12 +24,37 @@ type PhotoPreview = {
     caption: string;
 };
 
+// Helper function to extract YouTube video ID from URL
+const extractYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+        /^([a-zA-Z0-9_-]{11})$/,
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+    
+    return null;
+};
+
+// Helper function to get YouTube thumbnail URL
+const getYouTubeThumbnail = (videoId: string): string => {
+    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+};
+
 export default function AddGalleryDialog({ trigger }: { trigger?: React.ReactNode }) {
     const [open, setOpen] = React.useState(false);
     const [photos, setPhotos] = React.useState<PhotoPreview[]>([]);
     const [description, setDescription] = React.useState('');
     const [mediaType, setMediaType] = React.useState<'image_group' | 'youtube'>('image_group');
     const [youtubeUrl, setYoutubeUrl] = React.useState('');
+    const [youtubeVideoId, setYoutubeVideoId] = React.useState<string | null>(null);
 
     const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
         const files = Array.from(e.target.files || []);
@@ -39,6 +64,12 @@ export default function AddGalleryDialog({ trigger }: { trigger?: React.ReactNod
             caption: '',
         }));
         setPhotos(prev => [...prev, ...newPhotos]);
+    };
+
+    const handleYoutubeUrlChange = (url: string) => {
+        setYoutubeUrl(url);
+        const videoId = extractYouTubeVideoId(url);
+        setYoutubeVideoId(videoId);
     };
 
     const removePhoto = (index: number) => {
@@ -64,6 +95,7 @@ export default function AddGalleryDialog({ trigger }: { trigger?: React.ReactNod
         setDescription('');
         setMediaType('image_group');
         setYoutubeUrl('');
+        setYoutubeVideoId(null);
     };
 
     return (
@@ -153,6 +185,7 @@ export default function AddGalleryDialog({ trigger }: { trigger?: React.ReactNod
                                             setPhotos([]);
                                         } else {
                                             setYoutubeUrl('');
+                                            setYoutubeVideoId(null);
                                         }
                                     }}
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -173,7 +206,7 @@ export default function AddGalleryDialog({ trigger }: { trigger?: React.ReactNod
                                             type="url"
                                             required
                                             value={youtubeUrl}
-                                            onChange={(event) => setYoutubeUrl(event.target.value)}
+                                            onChange={(event) => handleYoutubeUrlChange(event.target.value)}
                                             placeholder="https://www.youtube.com/watch?v=..."
                                         />
                                         <Youtube className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -181,6 +214,28 @@ export default function AddGalleryDialog({ trigger }: { trigger?: React.ReactNod
                                     <p className="text-xs text-muted-foreground">
                                         Paste the full YouTube link. We will embed the video in the gallery.
                                     </p>
+                                    {youtubeVideoId && (
+                                        <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                                            <Label className="text-sm font-medium text-foreground mb-2 block">Video Preview</Label>
+                                            <div className="relative aspect-video w-full max-w-md overflow-hidden rounded-lg border">
+                                                <img
+                                                    src={getYouTubeThumbnail(youtubeVideoId)}
+                                                    alt="YouTube video thumbnail"
+                                                    className="h-full w-full object-cover"
+                                                    onError={(e) => {
+                                                        // Fallback to hqdefault if maxresdefault fails
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.src = `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`;
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <div className="rounded-full bg-red-600/90 p-3 shadow-lg">
+                                                        <Youtube className="h-8 w-8 text-white" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                     <InputError message={errors.youtube_url} />
                                 </div>
                             ) : (

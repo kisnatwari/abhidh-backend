@@ -5,7 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CourseCard, CourseResource as CourseCardResource } from '@/components/academy/course-card';
 import { hexToRgba } from '@/lib/colors';
 import { cn, stripHtml } from '@/lib/utils';
-import { Award, Briefcase, CheckCircle, Clock, GraduationCap, Laptop, Target, Users } from 'lucide-react';
+import { Award, Briefcase, CheckCircle, Clock, GraduationCap, Laptop, Target, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 type ProgramResource = {
     id: number;
@@ -47,8 +52,8 @@ interface HomeProps {
 
 const stats = [
     { icon: GraduationCap, value: '500+', label: 'Students Trained' },
-    { icon: Award, value: '50+', label: 'Courses Offered' },
-    { icon: Briefcase, value: '100+', label: 'Corporate Clients' },
+    { icon: Award, value: '100+', label: 'Trainings Available' },
+    { icon: Briefcase, value: '10+', label: 'Corporate Clients' },
     { icon: Target, value: '95%', label: 'Success Rate' },
 ];
 
@@ -68,7 +73,7 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                 </div>
 
                 <div className="relative container mx-auto px-6 py-20 lg:py-24">
-                    <div className="grid gap-16 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+                    <div className="grid gap-16 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
                         <div className="space-y-12 lg:pr-10">
                             <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/30 bg-white/85 px-5 py-2.5 shadow-[0_12px_35px_-24px_rgba(18,40,90,0.45)] backdrop-blur transition hover:shadow-[0_18px_45px_-24px_rgba(18,40,90,0.55)]">
                                 <GraduationCap className="h-4 w-4 text-primary" />
@@ -126,7 +131,7 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                             </Card>
                         </div>
 
-                        <div className="relative lg:ml-auto">
+                        <div className="relative lg:ml-auto lg:mt-8">
                             <div className="pointer-events-none absolute -top-16 right-4 hidden h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(45,106,255,0.35),transparent_65%)] blur-2xl lg:block" />
                             <Card className="relative overflow-hidden border border-white/60 bg-white/90 shadow-[0_30px_75px_-40px_rgba(18,40,90,0.45)] backdrop-blur-xl transition hover:shadow-[0_35px_90px_-45px_rgba(18,40,90,0.55)]">
                                 <div className="absolute inset-x-0 top-0 h-1.5 bg-linear-to-r from-primary via-accent to-primary/80" />
@@ -143,10 +148,10 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         {[
-                                            { label: 'Live sessions', value: '12+' },
-                                            { label: 'Capstone projects', value: '4' },
-                                            { label: 'Mentor reviews', value: 'Weekly' },
-                                            { label: 'Career clinics', value: 'Monthly' },
+                                            { label: 'Corporate Trainings', value: '12+' },
+                                            { label: 'Students Trainings', value: '10+' },
+                                            { label: 'Self Paced Learnings', value: '10+' },
+                                            { label: 'Career counselling', value: 'Regular' },
                                         ].map((item) => (
                                             <div
                                                 key={item.label}
@@ -179,7 +184,7 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                                 <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary transition group-hover:rotate-6 group-hover:bg-primary group-hover:text-primary-foreground">
                                     <Users className="h-8 w-8" />
                                 </div>
-                                <h3 className="mb-4 text-2xl font-bold">Guided Learning</h3>
+                                <h3 className="mb-4 text-2xl font-bold">In Person Training</h3>
                                 <p className="mb-6 text-muted-foreground">
                                     Instructor-led classroom training with hands-on practice, live Q&amp;A, and peer collaboration. Perfect for
                                     structured learning with expert guidance.
@@ -368,31 +373,73 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                         </Link>
                     </div>
 
-                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                        {trainers.map((trainer) => (
-                            <Card
-                                key={trainer.id}
-                                className="group overflow-hidden border border-white/10 bg-card/60 text-center backdrop-blur transition hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent/10"
-                            >
-                                <div className="relative h-80 overflow-hidden">
-                                    {trainer.photo_url ? (
-                                        <img src={trainer.photo_url} alt={trainer.name} className="h-full w-full object-cover transition group-hover:scale-105" />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/20 via-accent/15 to-background text-3xl font-semibold text-primary">
-                                            {trainer.name.charAt(0)}
+                    <div className="relative">
+                        <Swiper
+                            modules={[Navigation, Pagination, Autoplay]}
+                            spaceBetween={24}
+                            slidesPerView={1}
+                            breakpoints={{
+                                640: {
+                                    slidesPerView: 2,
+                                    spaceBetween: 24,
+                                },
+                                1024: {
+                                    slidesPerView: 3,
+                                    spaceBetween: 32,
+                                },
+                                1280: {
+                                    slidesPerView: 4,
+                                    spaceBetween: 32,
+                                },
+                            }}
+                            navigation={{
+                                nextEl: '.swiper-button-next-trainers',
+                                prevEl: '.swiper-button-prev-trainers',
+                            }}
+                            pagination={{
+                                clickable: true,
+                                el: '.swiper-pagination-trainers',
+                            }}
+                            autoplay={{
+                                delay: 3000,
+                                disableOnInteraction: false,
+                            }}
+                            loop={trainers.length > 4}
+                            className="!pb-12"
+                        >
+                            {trainers.map((trainer) => (
+                                <SwiperSlide key={trainer.id}>
+                                    <Card className="group overflow-hidden border border-white/10 bg-card/60 text-center backdrop-blur transition hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent/10 h-full">
+                                        <div className="relative h-80 overflow-hidden">
+                                            {trainer.photo_url ? (
+                                                <img src={trainer.photo_url} alt={trainer.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/20 via-accent/15 to-background text-3xl font-semibold text-primary">
+                                                    {trainer.name.charAt(0)}
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-linear-to-t from-primary/40 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
                                         </div>
-                                    )}
-                                    <div className="absolute inset-0 bg-linear-to-t from-primary/40 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                                </div>
-                                <CardContent className="space-y-2 p-6">
-                                    <h3 className="text-xl font-semibold text-foreground">{trainer.name}</h3>
-                                    <p className="text-sm font-medium text-primary">{trainer.expertise ?? 'Creative Specialist'}</p>
-                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                                        {trainer.years_of_experience ? `${trainer.years_of_experience}+ years of experience` : 'Experienced facilitator'}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                        <CardContent className="space-y-2 p-6">
+                                            <h3 className="text-xl font-semibold text-foreground">{trainer.name}</h3>
+                                            <p className="text-sm font-medium text-primary">{trainer.expertise ?? 'Creative Specialist'}</p>
+                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                {trainer.years_of_experience ? `${trainer.years_of_experience}+ years of experience` : 'Experienced facilitator'}
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
+                        {/* Navigation buttons */}
+                        <button className="swiper-button-prev-trainers absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-lg">
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button className="swiper-button-next-trainers absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-lg">
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                        {/* Pagination */}
+                        <div className="swiper-pagination-trainers mt-8 flex justify-center gap-2" />
                     </div>
                 </div>
             </section>

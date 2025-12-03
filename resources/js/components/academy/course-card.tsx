@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { hexToRgba } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import { ArrowUpRight, Clock, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Clock, Sparkles, DollarSign } from 'lucide-react';
 
 export type CourseResource = {
     id: number;
     title: string;
     description: string | null;
     duration: string | null;
+    price: number | null;
     course_type: string;
     course_type_label: string;
     featured: boolean;
@@ -125,6 +126,18 @@ export const CourseCard = ({ course, className, showProgramBadge = true }: Cours
                             {isSelfPaced ? 'Self-paced access' : 'Guided cohort'}
                         </span>
                     </div>
+
+                    {course.price && isSelfPaced ? (
+                        <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                            <DollarSign className="h-5 w-5 text-primary" />
+                            <div className="flex-1">
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">Price</p>
+                                <p className="text-xl font-bold text-primary">
+                                    Rs. {Math.round(course.price).toLocaleString('en-US')}
+                                </p>
+                            </div>
+                        </div>
+                    ) : null}
 
                     <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
                         <Link href={`/academy/courses/${course.id}`}>

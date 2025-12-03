@@ -72,6 +72,7 @@ class CourseController extends Controller
                 'title' => ['required', 'string', 'max:255'],
                 'description' => ['required', 'string'],
                 'duration' => ['nullable', 'string', 'max:50'],
+                'price' => ['nullable', 'numeric', 'min:0'],
                 'target_audience' => ['required', 'string'],
                 'key_learning_objectives' => ['nullable', 'array'],
                 'key_learning_objectives.*' => ['string'],
@@ -91,6 +92,7 @@ class CourseController extends Controller
                 'course_type' => ['required', 'in:guided,self_paced'],
                 'title' => ['required', 'string', 'max:255'],
                 'description' => ['nullable', 'string'],
+                'price' => ['nullable', 'numeric', 'min:0'],
                 'topics' => ['required', 'array'],
                 'topics.*.topic' => ['required', 'string'],
                 'topics.*.subtopics' => ['nullable', 'array'],
@@ -113,6 +115,11 @@ class CourseController extends Controller
         }
         if (isset($validated['key_learning_objectives'])) {
             $validated['key_learning_objectives'] = array_values($validated['key_learning_objectives']);
+        }
+
+        // Round price to integer (no decimals for Nepali Rupees)
+        if (isset($validated['price']) && $validated['price'] !== null) {
+            $validated['price'] = round($validated['price']);
         }
 
         $course = Course::create($validated);
@@ -159,6 +166,7 @@ class CourseController extends Controller
                 'title' => ['required', 'string', 'max:255'],
                 'description' => ['required', 'string'],
                 'duration' => ['nullable', 'string', 'max:50'],
+                'price' => ['nullable', 'numeric', 'min:0'],
                 'target_audience' => ['required', 'string'],
                 'key_learning_objectives' => ['nullable', 'array'],
                 'key_learning_objectives.*' => ['string'],
@@ -181,6 +189,7 @@ class CourseController extends Controller
                 'course_type' => ['required', 'in:guided,self_paced'],
                 'title' => ['required', 'string', 'max:255'],
                 'description' => ['nullable', 'string'],
+                'price' => ['nullable', 'numeric', 'min:0'],
                 'topics' => ['required', 'array'],
                 'topics.*.topic' => ['required', 'string'],
                 'topics.*.subtopics' => ['nullable', 'array'],
@@ -209,6 +218,11 @@ class CourseController extends Controller
         }
         if (isset($validated['key_learning_objectives'])) {
             $validated['key_learning_objectives'] = array_values($validated['key_learning_objectives']);
+        }
+
+        // Round price to integer (no decimals for Nepali Rupees)
+        if (isset($validated['price']) && $validated['price'] !== null) {
+            $validated['price'] = round($validated['price']);
         }
 
         $course->update($validated);

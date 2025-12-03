@@ -16,6 +16,7 @@ class Course extends Model
         'title',
         'description',
         'duration',
+        'price',
         'target_audience',
         'key_learning_objectives',
         'syllabus',
@@ -29,6 +30,7 @@ class Course extends Model
         'topics' => 'array',
         'key_learning_objectives' => 'array',
         'featured' => 'boolean',
+        'price' => 'decimal:2',
     ];
 
     public function program(): BelongsTo

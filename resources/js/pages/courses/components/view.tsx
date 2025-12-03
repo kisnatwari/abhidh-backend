@@ -154,6 +154,13 @@ export default function ViewCourseDialog({
 
                     {course.course_type === 'self_paced' && (
                         <>
+                            {course.price && (
+                                <div>
+                                    <h4 className="font-semibold mb-1">Price</h4>
+                                    <p className="text-lg font-bold text-primary">Rs. {Math.round(course.price).toLocaleString('en-US')}</p>
+                                </div>
+                            )}
+
                             {course.topics && course.topics.length > 0 && (
                                 <div>
                                     <h4 className="font-semibold mb-2">Topics</h4>

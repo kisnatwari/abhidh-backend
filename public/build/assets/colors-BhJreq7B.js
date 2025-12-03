@@ -1,0 +1,1 @@
+const i=(g,r=1)=>{if(!g)return`rgba(29, 78, 216, ${r})`;const n=g.replace("#","");if(![3,6].includes(n.length))return`rgba(29, 78, 216, ${r})`;const t=n.length===3?1:2,s=e=>e.length===1?e.repeat(2):e,c=parseInt(s(n.substring(0,t)),16),o=parseInt(s(n.substring(t,t*2)),16),b=parseInt(s(n.substring(t*2,t*3)),16);return`rgba(${c}, ${o}, ${b}, ${r})`};export{i as h};

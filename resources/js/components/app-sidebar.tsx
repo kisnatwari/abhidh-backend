@@ -13,13 +13,14 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, router } from '@inertiajs/react';
-import { BookOpen, FileText, Folder, LayoutGrid, Users, Images, GraduationCap, BookOpenCheck, UserCheck, UserCircle2, UsersRound, MessageSquare } from 'lucide-react';
+import { BookOpen, FileText, Folder, LayoutGrid, Users, Images, GraduationCap, BookOpenCheck, UserCheck, UserCircle2, UsersRound, MessageSquare, Briefcase } from 'lucide-react';
 import AppLogo from './app-logo';
 import blogs from '@/routes/blogs';
 import BlogController from '@/actions/App/Http/Controllers/BlogController';
 import TrainerController from '@/actions/App/Http/Controllers/TrainerController';
 import GalleryController from '@/actions/App/Http/Controllers/GalleryController';
 import ProgramController from '@/actions/App/Http/Controllers/ProgramController';
+import ServiceController from '@/actions/App/Http/Controllers/ServiceController';
 import CourseController from '@/actions/App/Http/Controllers/CourseController';
 import EnrollmentController from '@/actions/App/Http/Controllers/EnrollmentController';
 import TeamController from '@/actions/App/Http/Controllers/TeamController';
@@ -56,6 +57,11 @@ const mainNavItems: NavItem[] = [
         title: 'Programs',
         href: ProgramController.index(),
         icon: GraduationCap
+    },
+    {
+        title: 'Services',
+        href: ServiceController.index(),
+        icon: Briefcase
     },
     {
         title: 'Courses',

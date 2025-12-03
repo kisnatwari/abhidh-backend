@@ -179,6 +179,11 @@ export default function AddCourseDialog({
             submitData.program_id = data.program_id;
         }
 
+        // Add price for both course types
+        if (data.price !== null && data.price !== undefined) {
+            submitData.price = data.price;
+        }
+
         if (data.course_type === 'guided') {
             submitData.description = data.description;
             submitData.duration = data.duration || null;
@@ -329,6 +334,23 @@ export default function AddCourseDialog({
                                             onChange={(e) => setData('duration', e.target.value)}
                                         />
                                         <InputError message={errors.duration} />
+                                    </div>
+
+                                    {/* Price */}
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="price">Price (Rs.)</Label>
+                                        <Input
+                                            id="price"
+                                            name="price"
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            placeholder="e.g., 5000"
+                                            value={data.price ?? ''}
+                                            onChange={(e) => setData('price', e.target.value ? Number(e.target.value) : null)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Enter price in Nepali Rupees (no decimals)</p>
+                                        <InputError message={errors.price} />
                                     </div>
 
                                     {/* Target Audience */}

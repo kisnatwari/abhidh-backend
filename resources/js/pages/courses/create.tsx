@@ -209,6 +209,11 @@ export default function CreateCourse() {
             submitData.program_id = data.program_id;
         }
 
+        // Add price for both course types
+        if (data.price !== null && data.price !== undefined) {
+            submitData.price = data.price;
+        }
+
         if (data.course_type === 'guided') {
             submitData.description = data.description;
             submitData.duration = data.duration || null;
@@ -386,6 +391,24 @@ export default function CreateCourse() {
                                     />
                                     <InputError message={errors.target_audience} />
                                 </div>
+                            </div>
+
+                            {/* Price */}
+                            <div className="grid gap-2">
+                                <Label htmlFor="price">Price (Rs.)</Label>
+                                <Input
+                                    id="price"
+                                    name="price"
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    placeholder="e.g., 5000"
+                                    value={data.price ?? ''}
+                                    onChange={(e) => setData('price', e.target.value ? Number(e.target.value) : null)}
+                                    className="max-w-md"
+                                />
+                                <p className="text-xs text-muted-foreground">Enter price in Nepali Rupees (no decimals)</p>
+                                <InputError message={errors.price} />
                             </div>
 
                             {/* Key Learning Objectives */}

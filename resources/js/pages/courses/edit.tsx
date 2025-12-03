@@ -41,6 +41,7 @@ export default function EditCourse() {
     const [courseType, setCourseType] = useState<'guided' | 'self_paced'>(course.course_type || 'guided');
     const [programId, setProgramId] = useState<string | undefined>(course.program_id ? String(course.program_id) : undefined);
     const [price, setPrice] = useState<number | null>(course.price ? Math.round(course.price) : null);
+    const [featured, setFeatured] = useState<boolean>(course.featured || false);
     
     // Guided course state
     const [description, setDescription] = useState(course.description || '');
@@ -321,8 +322,17 @@ export default function EditCourse() {
                                     </div>
 
                                     <div className="flex items-center gap-2 pt-8">
-                                        <Switch name="featured" id="featured" defaultChecked={course.featured} />
+                                        <Switch 
+                                            id="featured" 
+                                            checked={featured}
+                                            onCheckedChange={setFeatured}
+                                        />
                                         <Label htmlFor="featured">Featured Course</Label>
+                                        <input 
+                                            type="hidden" 
+                                            name="featured" 
+                                            value={featured ? '1' : '0'}
+                                        />
                                     </div>
                                 </div>
 
@@ -370,6 +380,23 @@ export default function EditCourse() {
                                                 />
                                                 <InputError message={errors.target_audience} />
                                             </div>
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="price">Price (Rs.)</Label>
+                                            <Input
+                                                id="price"
+                                                name="price"
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                placeholder="e.g., 5000"
+                                                defaultValue={course.price ? Math.round(course.price) : ''}
+                                                className="max-w-md"
+                                            />
+                                            <p className="text-xs text-muted-foreground">Enter price in Nepali Rupees (no decimals)</p>
+                                            <InputError message={errors.price} />
                                         </div>
 
                                         {/* Key Learning Objectives */}
@@ -475,6 +502,38 @@ export default function EditCourse() {
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </div>
+
+                                                        {/* Hidden inputs for collapsed items - always present in form */}
+                                                        {!expandedSessions.has(syllabusIndex) && (
+                                                            <>
+                                                                <input
+                                                                    type="hidden"
+                                                                    name={`syllabus[${syllabusIndex}][course_topic]`}
+                                                                    value={row.course_topic || ''}
+                                                                />
+                                                                <input
+                                                                    type="hidden"
+                                                                    name={`syllabus[${syllabusIndex}][hours]`}
+                                                                    value={row.hours || ''}
+                                                                />
+                                                                {row.learnings.map((learning, learningIndex) => (
+                                                                    <input
+                                                                        key={learningIndex}
+                                                                        type="hidden"
+                                                                        name={`syllabus[${syllabusIndex}][learnings][${learningIndex}]`}
+                                                                        value={learning || ''}
+                                                                    />
+                                                                ))}
+                                                                {row.outcomes.map((outcome, outcomeIndex) => (
+                                                                    <input
+                                                                        key={outcomeIndex}
+                                                                        type="hidden"
+                                                                        name={`syllabus[${syllabusIndex}][outcomes][${outcomeIndex}]`}
+                                                                        value={outcome || ''}
+                                                                    />
+                                                                ))}
+                                                            </>
+                                                        )}
 
                                                         {expandedSessions.has(syllabusIndex) && (
                                                             <div className="space-y-4 pl-6 border-l-2 border-muted">

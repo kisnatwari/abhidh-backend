@@ -22,6 +22,7 @@ type CourseRow = {
   title: string;
   description: string | null;
   duration: string | null;
+  price: number | null;
   target_audience: string | null;
   program_id: number | null;
   program: { id: number; name: string } | null;
@@ -174,6 +175,7 @@ export default function CoursesIndex() {
                 <TableHead>Type</TableHead>
                 <TableHead>Program</TableHead>
                 <TableHead>Duration</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead>Enrollments</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -182,7 +184,7 @@ export default function CoursesIndex() {
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
                     No courses found.
                   </TableCell>
                 </TableRow>
@@ -225,6 +227,14 @@ export default function CoursesIndex() {
 
                   <TableCell>
                     {course.duration || <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+
+                  <TableCell>
+                    {course.price !== null && course.price !== undefined ? (
+                      <span className="font-medium">Rs. {Math.round(course.price).toLocaleString('en-US')}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
 
                   <TableCell>

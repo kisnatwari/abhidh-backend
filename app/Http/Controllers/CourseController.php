@@ -118,8 +118,13 @@ class CourseController extends Controller
         }
 
         // Round price to integer (no decimals for Nepali Rupees)
-        if (isset($validated['price']) && $validated['price'] !== null) {
-            $validated['price'] = round($validated['price']);
+        // Convert empty string to null, then round if not null
+        if (isset($validated['price'])) {
+            if ($validated['price'] === '' || $validated['price'] === null) {
+                $validated['price'] = null;
+            } else {
+                $validated['price'] = round((float) $validated['price']);
+            }
         }
 
         $course = Course::create($validated);
@@ -221,8 +226,13 @@ class CourseController extends Controller
         }
 
         // Round price to integer (no decimals for Nepali Rupees)
-        if (isset($validated['price']) && $validated['price'] !== null) {
-            $validated['price'] = round($validated['price']);
+        // Convert empty string to null, then round if not null
+        if (isset($validated['price'])) {
+            if ($validated['price'] === '' || $validated['price'] === null) {
+                $validated['price'] = null;
+            } else {
+                $validated['price'] = round((float) $validated['price']);
+            }
         }
 
         $course->update($validated);

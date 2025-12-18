@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Music, Youtube } from 'lucide-react';
 
 const links = [
     { label: 'Programs', href: '/academy/programs' },
@@ -10,11 +10,12 @@ const links = [
 ];
 
 const socials = [
-    { icon: Facebook, href: 'https://www.facebook.com/', label: 'Facebook' },
-    { icon: Instagram, href: 'https://www.instagram.com/', label: 'Instagram' },
-    { icon: Linkedin, href: 'https://www.linkedin.com/', label: 'LinkedIn' },
-    { icon: Youtube, href: 'https://www.youtube.com/', label: 'YouTube' },
-];
+    { icon: Facebook, href: "https://www.facebook.com/abhidhgroup/", label: "Facebook" },
+    { icon: Instagram, href: "https://www.instagram.com/abhidhgroup/", label: "Instagram" },
+    { icon: Linkedin, href: "https://www.linkedin.com/company/abhidhacademy", label: "LinkedIn" },
+    { icon: Youtube, href: "https://www.youtube.com/@AbhidhGroup", label: "YouTube" },
+    { icon: Music, href: "https://www.tiktok.com/@abhidh.group", label: "TikTok" },
+  ];
 
 const SiteFooter = () => {
     const year = new Date().getFullYear();
@@ -63,7 +64,7 @@ const SiteFooter = () => {
                         <p className="mt-4 text-sm text-foreground/80">
                             Nardevi, Kathmandu, Nepal
                             <br />
-                            info@abhidhgroup.com
+                            academy@abhidh.com
                             <br />
                             +977-9841080407
                         </p>

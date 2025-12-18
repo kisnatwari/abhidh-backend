@@ -149,7 +149,7 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                                     <div className="grid grid-cols-2 gap-4">
                                         {[
                                             { label: 'Corporate Trainings', value: '12+' },
-                                            { label: 'Students Trainings', value: '10+' },
+                                            { label: 'School Trainings', value: '10+' },
                                             { label: 'Self Paced Learnings', value: '10+' },
                                             { label: 'Career counselling', value: 'Regular' },
                                         ].map((item) => (

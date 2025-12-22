@@ -60,7 +60,7 @@ const SiteFooter = () => {
                     </div>
 
                     <div>
-                        <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Visit</h4>
+                        <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Contact Us</h4>
                         <p className="mt-4 text-sm text-foreground/80">
                             Nardevi, Kathmandu, Nepal
                             <br />

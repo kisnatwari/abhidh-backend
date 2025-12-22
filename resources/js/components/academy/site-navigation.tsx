@@ -29,7 +29,6 @@ const links = [
     { name: 'Self-Paced', href: '/academy/self-paced-courses', match: (url: string) => url.startsWith('/academy/self-paced-courses') },
     { name: 'Galleries', href: '/academy/galleries', match: (url: string) => url.startsWith('/academy/galleries') },
     { name: 'Blog', href: '/academy/blog', match: (url: string) => url.startsWith('/academy/blog') },
-    { name: 'Contact', href: '/academy/contact', match: (url: string) => url.startsWith('/academy/contact') },
 ];
 
 const SiteNavigation = () => {
@@ -133,6 +132,16 @@ const SiteNavigation = () => {
                                 )}
                             </DropdownMenuContent>
                         </DropdownMenu>
+
+                        <Link
+                            href="/academy/contact"
+                            className={cn(
+                                'text-base font-medium transition-colors duration-200',
+                                isActive((url: string) => url.startsWith('/academy/contact')) ? 'text-primary' : 'text-foreground/85 hover:text-primary',
+                            )}
+                        >
+                            Contact
+                        </Link>
 
                         {auth?.user ? (
                             <DropdownMenu>
@@ -293,6 +302,17 @@ const SiteNavigation = () => {
                                         )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+
+                                <Link
+                                    href="/academy/contact"
+                                    onClick={() => setOpen(false)}
+                                    className={cn(
+                                        'block rounded-lg px-4 py-3 text-base font-medium transition-colors',
+                                        isActive((url: string) => url.startsWith('/academy/contact')) ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted/50',
+                                    )}
+                                >
+                                    Contact
+                                </Link>
 
                                 <div className="pt-4 space-y-2 border-t border-border mt-4">
                                     {auth?.user ? (

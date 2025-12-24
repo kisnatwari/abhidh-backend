@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Abhidh Group Admin',
                 'password' => Hash::make('AbhidhGroup@2025'),
                 'email_verified_at' => now(),
+                'is_admin' => true,
             ]
         );
 
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Krishna Tiwari',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'is_admin' => true,
             ]
         );
     }

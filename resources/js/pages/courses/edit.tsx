@@ -981,7 +981,7 @@ export default function EditCourse() {
                                                                                 <div
                                                                                     key={subtopicIndex}
                                                                                     className="rounded-lg border bg-card p-4 space-y-4"
-                                                                                    style={{ backgroundColor: '#eee' }}
+                                                                                    style={{ backgroundColor: 'rgb(250, 250, 250)' }}
                                                                                 >
                                                                                     <div className="flex items-center justify-between">
                                                                                         <Button

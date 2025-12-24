@@ -355,7 +355,7 @@ export default function ShowCourse() {
                                                                             {subtopicContent && isContentVisible && (
                                                                                 <div 
                                                                                     className="prose prose-sm max-w-none text-xs overflow-x-auto break-words text-muted-foreground rounded-md p-4"
-                                                                                    style={{ backgroundColor: '#eee' }}
+                                                                                    style={{ backgroundColor: 'rgb(250, 250, 250)' }}
                                                                                     dangerouslySetInnerHTML={{ __html: subtopicContent }}
                                                                                 />
                                                                             )}

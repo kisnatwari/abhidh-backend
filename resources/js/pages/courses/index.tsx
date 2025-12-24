@@ -15,6 +15,14 @@ import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
 import DeleteCourseDialog from './components/delete';
+import { MoreVertical, Edit, Trash2, Eye, Users } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type CourseRow = {
   id: number;
@@ -178,7 +186,7 @@ export default function CoursesIndex() {
                 <TableHead>Price</TableHead>
                 <TableHead>Enrollments</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,15 +253,49 @@ export default function CoursesIndex() {
                     {new Date(course.created_at).toLocaleDateString()}
                   </TableCell>
 
-                  <TableCell className="text-right space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.visit(CourseController.edit.url(course.id))}
-                    >
-                      Edit
-                    </Button>
-                    <DeleteCourseDialog course={course} />
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open actions">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => router.visit(CourseController.show.url(course.id))}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => router.visit(CourseController.edit.url(course.id))}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => router.visit(`/enrollments?course_id=${course.id}`)}
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          See enrollments
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DeleteCourseDialog 
+                          course={course} 
+                          trigger={
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault();
+                              }}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete course
+                            </DropdownMenuItem>
+                          }
+                        />
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

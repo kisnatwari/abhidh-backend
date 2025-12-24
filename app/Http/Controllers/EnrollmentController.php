@@ -43,6 +43,11 @@ class EnrollmentController extends Controller
             $query->where('is_paid', $request->is_paid === '1');
         }
 
+        // Course filter
+        if ($request->has('course_id') && $request->course_id) {
+            $query->where('course_id', $request->course_id);
+        }
+
         // Pagination
         $perPage = $request->get('per_page', 10);
         $enrollments = $query->latest('enrollment_date')->paginate($perPage)->withQueryString();

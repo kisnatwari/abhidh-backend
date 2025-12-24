@@ -1,0 +1,136 @@
+{
+  "course_type": "self_paced",
+  "title": "Complete Web Development Bootcamp",
+  "description": "Master modern web development from scratch. Learn HTML, CSS, JavaScript, React, Node.js, and more. Build real-world projects and launch your career as a full-stack developer.",
+  "price": 15000,
+  "program_id": null,
+  "featured": true,
+  "topics": [
+    {
+      "topic": "Introduction to Web Development",
+      "subtopics": [
+        {
+          "name": "Understanding the Web",
+          "content": "<h2>What is the Web?</h2><p>The World Wide Web (WWW) is an information system that enables content sharing over the Internet through user-friendly ways meant to appeal to users beyond IT specialists and hobbyists.</p><h3>Key Concepts:</h3><ul><li>How the Internet works</li><li>Client-Server architecture</li><li>HTTP and HTTPS protocols</li><li>Domain names and DNS</li></ul>",
+          "hours": 1.5
+        },
+        {
+          "name": "Setting Up Your Development Environment",
+          "content": "<h2>Development Tools</h2><p>Setting up a proper development environment is crucial for efficient coding.</p><h3>What You'll Learn:</h3><ul><li>Installing VS Code</li><li>Browser DevTools</li><li>Git and GitHub basics</li><li>Package managers (npm/yarn)</li></ul><p>By the end of this section, you'll have a fully functional development environment ready for coding.</p>",
+          "hours": 2
+        },
+        {
+          "name": "HTML Fundamentals",
+          "content": "<h2>HTML Basics</h2><p>HTML (HyperText Markup Language) is the standard markup language for creating web pages.</p><h3>Topics Covered:</h3><ul><li>HTML structure and syntax</li><li>Common HTML tags</li><li>Forms and inputs</li><li>Semantic HTML5</li><li>Accessibility best practices</li></ul><h3>Practice Exercise:</h3><p>Create a personal portfolio page using semantic HTML5 elements.</p>",
+          "hours": 3
+        }
+      ]
+    },
+    {
+      "topic": "CSS and Styling",
+      "subtopics": [
+        {
+          "name": "CSS Basics and Selectors",
+          "content": "<h2>Introduction to CSS</h2><p>CSS (Cascading Style Sheets) is used to style and layout web pages.</p><h3>What You'll Learn:</h3><ul><li>CSS syntax and rules</li><li>Selectors (class, ID, element)</li><li>CSS specificity</li><li>Box model</li><li>Display properties</li></ul>",
+          "hours": 2.5
+        },
+        {
+          "name": "Layout with Flexbox and Grid",
+          "content": "<h2>Modern CSS Layouts</h2><p>Flexbox and CSS Grid are powerful tools for creating responsive layouts.</p><h3>Flexbox:</h3><ul><li>Flex containers and items</li><li>Justify-content and align-items</li><li>Flex direction and wrap</li></ul><h3>CSS Grid:</h3><ul><li>Grid containers and tracks</li><li>Grid areas and templates</li><li>Responsive grid layouts</li></ul>",
+          "hours": 3
+        },
+        {
+          "name": "Responsive Design",
+          "content": "<h2>Making Websites Mobile-Friendly</h2><p>Responsive design ensures your website looks great on all devices.</p><h3>Key Concepts:</h3><ul><li>Media queries</li><li>Mobile-first approach</li><li>Viewport meta tag</li><li>Breakpoints</li><li>Flexible images and media</li></ul>",
+          "hours": 2.5
+        }
+      ]
+    },
+    {
+      "topic": "JavaScript Fundamentals",
+      "subtopics": [
+        {
+          "name": "JavaScript Basics",
+          "content": "<h2>Introduction to JavaScript</h2><p>JavaScript is a powerful programming language that adds interactivity to websites.</p><h3>Topics Covered:</h3><ul><li>Variables (let, const, var)</li><li>Data types</li><li>Operators</li><li>Functions</li><li>Control flow (if/else, loops)</li></ul>",
+          "hours": 4
+        },
+        {
+          "name": "Arrays and Objects",
+          "content": "<h2>Working with Data Structures</h2><p>Arrays and objects are fundamental data structures in JavaScript.</p><h3>Arrays:</h3><ul><li>Array methods (map, filter, reduce)</li><li>Array destructuring</li><li>Spread operator</li></ul><h3>Objects:</h3><ul><li>Object properties and methods</li><li>Object destructuring</li><li>JSON</li></ul>",
+          "hours": 3.5
+        },
+        {
+          "name": "DOM Manipulation",
+          "content": "<h2>Interacting with the Web Page</h2><p>The Document Object Model (DOM) allows JavaScript to interact with HTML elements.</p><h3>What You'll Learn:</h3><ul><li>Selecting elements</li><li>Modifying content and styles</li><li>Event listeners</li><li>Creating and removing elements</li><li>Event delegation</li></ul>",
+          "hours": 4
+        },
+        {
+          "name": "Async JavaScript",
+          "content": "<h2>Asynchronous Programming</h2><p>Learn how to handle asynchronous operations in JavaScript.</p><h3>Topics:</h3><ul><li>Callbacks</li><li>Promises</li><li>Async/await</li><li>Fetch API</li><li>Error handling</li></ul>",
+          "hours": 3.5
+        }
+      ]
+    },
+    {
+      "topic": "React Framework",
+      "subtopics": [
+        {
+          "name": "React Basics",
+          "content": "<h2>Introduction to React</h2><p>React is a JavaScript library for building user interfaces.</p><h3>Core Concepts:</h3><ul><li>Components and JSX</li><li>Props and state</li><li>Event handling</li><li>Conditional rendering</li></ul>",
+          "hours": 4
+        },
+        {
+          "name": "React Hooks",
+          "content": "<h2>Modern React with Hooks</h2><p>Hooks allow you to use state and other React features in functional components.</p><h3>Common Hooks:</h3><ul><li>useState</li><li>useEffect</li><li>useContext</li><li>Custom hooks</li></ul>",
+          "hours": 4.5
+        },
+        {
+          "name": "React Router and State Management",
+          "content": "<h2>Building Complex Applications</h2><p>Learn how to handle routing and manage application state.</p><h3>React Router:</h3><ul><li>Setting up routes</li><li>Navigation</li><li>Route parameters</li></ul><h3>State Management:</h3><ul><li>Context API</li><li>Redux basics</li><li>State patterns</li></ul>",
+          "hours": 5
+        }
+      ]
+    },
+    {
+      "topic": "Backend Development with Node.js",
+      "subtopics": [
+        {
+          "name": "Node.js Fundamentals",
+          "content": "<h2>Server-Side JavaScript</h2><p>Node.js allows you to run JavaScript on the server.</p><h3>Topics Covered:</h3><ul><li>Node.js basics</li><li>Modules and require</li><li>NPM packages</li><li>File system operations</li></ul>",
+          "hours": 3
+        },
+        {
+          "name": "Express.js Framework",
+          "content": "<h2>Building RESTful APIs</h2><p>Express is a fast, unopinionated web framework for Node.js.</p><h3>What You'll Learn:</h3><ul><li>Setting up Express</li><li>Routes and middleware</li><li>Request and response handling</li><li>Error handling</li></ul>",
+          "hours": 4
+        },
+        {
+          "name": "Database Integration",
+          "content": "<h2>Working with Databases</h2><p>Learn how to connect and interact with databases in your Node.js applications.</p><h3>Topics:</h3><ul><li>MongoDB with Mongoose</li><li>SQL databases</li><li>ORM concepts</li><li>Database queries</li></ul>",
+          "hours": 4.5
+        }
+      ]
+    },
+    {
+      "topic": "Final Project",
+      "subtopics": [
+        {
+          "name": "Project Planning and Setup",
+          "content": "<h2>Planning Your Full-Stack Application</h2><p>Learn how to plan and structure a complete web application project.</p><h3>Steps:</h3><ul><li>Requirements gathering</li><li>Database design</li><li>API design</li><li>UI/UX planning</li></ul>",
+          "hours": 2
+        },
+        {
+          "name": "Building the Application",
+          "content": "<h2>Implementation Phase</h2><p>Build a complete full-stack application using all the skills you've learned.</p><h3>Features to Implement:</h3><ul><li>User authentication</li><li>CRUD operations</li><li>Real-time features</li><li>Deployment</li></ul>",
+          "hours": 8
+        },
+        {
+          "name": "Deployment and Launch",
+          "content": "<h2>Going Live</h2><p>Deploy your application to production and make it accessible to users.</p><h3>Deployment Options:</h3><ul><li>Vercel/Netlify for frontend</li><li>Heroku/Railway for backend</li><li>Domain setup</li><li>CI/CD basics</li></ul>",
+          "hours": 2
+        }
+      ]
+    }
+  ]
+}
+

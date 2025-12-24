@@ -13,7 +13,7 @@ import {
     ChevronDown,
     ChevronUp,
     Clock,
-    DollarSign,
+    Banknote,
     FileText,
     GraduationCap,
     Image as ImageIcon,
@@ -30,10 +30,20 @@ type CourseProgram = {
     color?: string | null;
 };
 
+type CourseSubtopic = {
+    name?: string;
+    content?: string;
+    hours?: number;
+    duration?: string | null;
+};
+
 type CourseTopic = {
-    label: string | null;
+    id?: number;
+    order?: number;
+    title?: string | null;
+    label?: string | null;
     duration: string | null;
-    subtopics?: string[];
+    subtopics?: (string | CourseSubtopic)[];
 };
 
 type CourseSyllabusRow = {
@@ -159,12 +169,53 @@ const CourseShow = ({ course }: CourseDetailProps) => {
         () =>
             Array.isArray(course.topics)
                 ? course.topics
-                      .map((topic, index) => ({
-                          id: `${course.id}-topic-${index}`,
-                          label: topic?.label ?? null,
-                          subtopics: topic?.subtopics ?? [],
-                          duration: topic?.duration ?? null,
-                      }))
+                      .map((topic, index) => {
+                          // Handle new structure with title/order or old structure with label
+                          const topicTitle = topic?.title ?? topic?.label ?? null;
+                          const topicId = topic?.id ? `${course.id}-topic-${topic.id}` : `${course.id}-topic-${index}`;
+                          
+                          // Process subtopics - handle both new format (objects) and old format (strings)
+                          const subtopics = (topic?.subtopics ?? []).map((subtopic: any, subIndex: number) => {
+                              if (typeof subtopic === 'object' && subtopic !== null) {
+                                  // New format: object with name, content, hours
+                                  return {
+                                      name: subtopic.name || `Subtopic ${subIndex + 1}`,
+                                      content: subtopic.content || '',
+                                      hours: subtopic.hours || 0,
+                                      duration: subtopic.hours 
+                                          ? (subtopic.hours === Math.floor(subtopic.hours)
+                                              ? `${subtopic.hours} hrs`
+                                              : `${subtopic.hours.toFixed(1)} hrs`)
+                                          : null,
+                                  };
+                              } else if (typeof subtopic === 'string') {
+                                  // Old format: just a string
+                                  return {
+                                      name: subtopic,
+                                      content: '',
+                                      hours: 0,
+                                      duration: null,
+                                  };
+                              }
+                              return null;
+                          }).filter(Boolean);
+                          
+                          // Calculate total hours from subtopics
+                          const totalHours = subtopics.reduce((sum: number, sub: any) => sum + (sub.hours || 0), 0);
+                          const duration = totalHours > 0
+                              ? (totalHours === Math.floor(totalHours)
+                                  ? `${totalHours} hrs`
+                                  : `${totalHours.toFixed(1)} hrs`)
+                              : (topic?.duration ?? null);
+                          
+                          return {
+                              id: topicId,
+                              label: topicTitle,
+                              title: topicTitle,
+                              subtopics: subtopics,
+                              duration: duration,
+                          };
+                      })
                       .filter((topic) => Boolean(topic.label || topic.subtopics.length || topic.duration))
                 : [],
         [course.id, course.topics],
@@ -235,7 +286,7 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                 ) : null}
                                 {course.price && isSelfPaced ? (
                                     <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 font-semibold text-primary">
-                                        <DollarSign className="h-5 w-5" />
+                                        <Banknote className="h-5 w-5" />
                                         <span>Rs. {Math.round(course.price).toLocaleString('en-US')}</span>
                                     </div>
                                 ) : null}
@@ -530,12 +581,24 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                                 {isExpanded && topic.subtopics?.length ? (
                                                     <div className="px-4 pb-3 pt-0">
                                                         <ul className="space-y-1.5 text-xs text-muted-foreground">
-                                                            {topic.subtopics.filter(Boolean).map((subtopic, subIndex) => (
-                                                                <li key={`${topic.id}-subtopic-${subIndex}`} className="flex items-start gap-2">
-                                                                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 flex-shrink-0" />
-                                                                    <span>{subtopic}</span>
-                                                                </li>
-                                                            ))}
+                                                            {topic.subtopics.filter(Boolean).map((subtopic: any, subIndex: number) => {
+                                                                const subtopicName = typeof subtopic === 'object' ? subtopic.name : subtopic;
+                                                                const subtopicDuration = typeof subtopic === 'object' ? subtopic.duration : null;
+                                                                
+                                                                return (
+                                                                    <li key={`${topic.id}-subtopic-${subIndex}`} className="flex items-center justify-between gap-2">
+                                                                        <div className="flex items-start gap-2 flex-1 min-w-0">
+                                                                            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 flex-shrink-0" />
+                                                                            <span>{subtopicName}</span>
+                                                                        </div>
+                                                                        {subtopicDuration && (
+                                                                            <span className="text-muted-foreground whitespace-nowrap flex-shrink-0">
+                                                                                {subtopicDuration}
+                                                                            </span>
+                                                                        )}
+                                                                    </li>
+                                                                );
+                                                            })}
                                                         </ul>
                                                     </div>
                                                 ) : null}

@@ -45,7 +45,7 @@ class StudentDashboardController extends Controller
                     $topics = $this->progressService->extractTopics($enrollment->course, includeContent: false);
                     $this->progressService->syncTopics($enrollment, $topics);
                     $progressCollection = $enrollment->topicProgress()->get();
-                    $summary = $this->progressService->summarize($progressCollection, count($topics));
+                    $summary = $this->progressService->summarize($progressCollection, count($topics), $topics);
                     $nextTopic = null;
 
                     if ($summary['next_topic_index'] !== null && isset($topics[$summary['next_topic_index']])) {
@@ -58,8 +58,10 @@ class StudentDashboardController extends Controller
                     $progressSummary = [
                         'completedCount' => $summary['completed_count'],
                         'topicCount' => $summary['topic_count'],
+                        'subtopicCount' => $summary['subtopic_count'] ?? 0,
                         'percentComplete' => $summary['percent_complete'],
                         'nextTopic' => $nextTopic,
+                        'nextSubtopicIndex' => $summary['next_subtopic_index'] ?? null,
                     ];
                 }
 
@@ -98,7 +100,7 @@ class StudentDashboardController extends Controller
                     $topics = $this->progressService->extractTopics($enrollment->course, includeContent: false);
                     $this->progressService->syncTopics($enrollment, $topics);
                     $progressCollection = $enrollment->topicProgress()->get();
-                    $summary = $this->progressService->summarize($progressCollection, count($topics));
+                    $summary = $this->progressService->summarize($progressCollection, count($topics), $topics);
                     $nextTopic = null;
 
                     if ($summary['next_topic_index'] !== null && isset($topics[$summary['next_topic_index']])) {
@@ -111,8 +113,10 @@ class StudentDashboardController extends Controller
                     $progressSummary = [
                         'completedCount' => $summary['completed_count'],
                         'topicCount' => $summary['topic_count'],
+                        'subtopicCount' => $summary['subtopic_count'] ?? 0,
                         'percentComplete' => $summary['percent_complete'],
                         'nextTopic' => $nextTopic,
+                        'nextSubtopicIndex' => $summary['next_subtopic_index'] ?? null,
                     ];
                 }
 
@@ -231,6 +235,42 @@ class StudentDashboardController extends Controller
         return redirect()->back()->with('progressUpdated', true);
     }
 
+    public function markSubtopicStarted(Request $request, Enrollment $enrollment, int $topic, int $subtopic): RedirectResponse
+    {
+        $user = $request->user();
+        abort_if($enrollment->user_id !== $user->id, 404);
+
+        $course = $enrollment->course()->firstOrFail();
+        $this->ensureSelfPacedAccess($enrollment, $course);
+
+        $topics = $this->progressService->extractTopics($course, includeContent: false);
+        abort_if(! isset($topics[$topic]), 404);
+        abort_if(! isset($topics[$topic]['subtopics'][$subtopic]), 404);
+
+        $this->progressService->syncTopics($enrollment, $topics);
+        $this->progressService->markSubtopicStarted($enrollment, $topic, $subtopic);
+
+        return redirect()->back()->with('progressUpdated', true);
+    }
+
+    public function markSubtopicCompleted(Request $request, Enrollment $enrollment, int $topic, int $subtopic): RedirectResponse
+    {
+        $user = $request->user();
+        abort_if($enrollment->user_id !== $user->id, 404);
+
+        $course = $enrollment->course()->firstOrFail();
+        $this->ensureSelfPacedAccess($enrollment, $course);
+
+        $topics = $this->progressService->extractTopics($course, includeContent: false);
+        abort_if(! isset($topics[$topic]), 404);
+        abort_if(! isset($topics[$topic]['subtopics'][$subtopic]), 404);
+
+        $this->progressService->syncTopics($enrollment, $topics);
+        $this->progressService->markSubtopicCompleted($enrollment, $topic, $subtopic);
+
+        return redirect()->back()->with('progressUpdated', true);
+    }
+
     protected function courseStudyResource(?Course $course, ?Enrollment $enrollment = null): ?array
     {
         if (! $course) {
@@ -269,16 +309,33 @@ class StudentDashboardController extends Controller
             if ($enrollment) {
                 $this->progressService->syncTopics($enrollment, $topics);
                 $progressCollection = $enrollment->topicProgress()->get();
-                $summary = $this->progressService->summarize($progressCollection, count($topics));
+                $summary = $this->progressService->summarize($progressCollection, count($topics), $topics);
 
+                // Build progress payload for topics and subtopics
                 $progressPayload = collect($topics)->map(function (array $topic) use ($progressCollection) {
-                    $progress = $progressCollection->firstWhere('topic_index', $topic['order']);
+                    $topicProgress = $progressCollection->firstWhere(function ($p) use ($topic) {
+                        return $p->topic_index === $topic['order'] && $p->subtopic_index === null;
+                    });
+
+                    $subtopicsProgress = collect($topic['subtopics'] ?? [])->map(function ($subtopic, int $subtopicIndex) use ($progressCollection, $topic) {
+                        $subtopicProgress = $progressCollection->firstWhere(function ($p) use ($topic, $subtopicIndex) {
+                            return $p->topic_index === $topic['order'] && $p->subtopic_index === $subtopicIndex;
+                        });
+
+                        return [
+                            'index' => $subtopicIndex,
+                            'status' => $subtopicProgress->status ?? 'not_started',
+                            'lastViewedAt' => optional($subtopicProgress->last_viewed_at)->toDateTimeString(),
+                            'completedAt' => optional($subtopicProgress->completed_at)->toDateTimeString(),
+                        ];
+                    })->all();
 
                     return [
                         'order' => $topic['order'],
-                        'status' => $progress->status ?? 'not_started',
-                        'lastViewedAt' => optional($progress->last_viewed_at)->toDateTimeString(),
-                        'completedAt' => optional($progress->completed_at)->toDateTimeString(),
+                        'status' => $topicProgress->status ?? 'not_started',
+                        'lastViewedAt' => optional($topicProgress->last_viewed_at)->toDateTimeString(),
+                        'completedAt' => optional($topicProgress->completed_at)->toDateTimeString(),
+                        'subtopics' => $subtopicsProgress,
                     ];
                 })->all();
 
@@ -293,8 +350,10 @@ class StudentDashboardController extends Controller
                 $summaryPayload = [
                     'completedCount' => $summary['completed_count'],
                     'topicCount' => $summary['topic_count'],
+                    'subtopicCount' => $summary['subtopic_count'] ?? 0,
                     'percentComplete' => $summary['percent_complete'],
                     'nextTopic' => $nextTopic,
+                    'nextSubtopicIndex' => $summary['next_subtopic_index'] ?? null,
                 ];
             }
 

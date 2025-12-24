@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import CourseController from '@/actions/App/Http/Controllers/CourseController';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import DeleteCourseDialog from './components/delete';
 
 type Course = {
@@ -45,10 +46,46 @@ export default function ShowCourse() {
     const { props } = usePage<PageProps>();
     const { course, programs } = props;
 
+    // State to track which subtopic contents are visible
+    const [visibleSubtopicContents, setVisibleSubtopicContents] = useState<Set<string>>(new Set());
+    const [showAllContents, setShowAllContents] = useState(false);
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Courses', href: CourseController.index().url },
         { title: course.title, href: CourseController.show.url(course.id) },
     ];
+
+    const toggleSubtopicContent = (topicIndex: number, subtopicIndex: number) => {
+        const key = `${topicIndex}-${subtopicIndex}`;
+        const newSet = new Set(visibleSubtopicContents);
+        if (newSet.has(key)) {
+            newSet.delete(key);
+        } else {
+            newSet.add(key);
+        }
+        setVisibleSubtopicContents(newSet);
+        setShowAllContents(false);
+    };
+
+    const showAllSubtopicContents = () => {
+        if (course.course_type === 'self_paced' && course.topics) {
+            const allKeys = new Set<string>();
+            course.topics.forEach((topicRow: any, topicIndex: number) => {
+                if (topicRow.subtopics) {
+                    topicRow.subtopics.forEach((_: any, subtopicIndex: number) => {
+                        allKeys.add(`${topicIndex}-${subtopicIndex}`);
+                    });
+                }
+            });
+            setVisibleSubtopicContents(allKeys);
+            setShowAllContents(true);
+        }
+    };
+
+    const hideAllSubtopicContents = () => {
+        setVisibleSubtopicContents(new Set());
+        setShowAllContents(false);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -214,41 +251,123 @@ export default function ShowCourse() {
                             
                             {course.topics && course.topics.length > 0 && (
                                 <div>
-                                    <h3 className="font-semibold mb-4">Topics</h3>
-                                    <div className="space-y-4">
-                                        {course.topics.map((topicRow: any, index: number) => (
-                                            <div
-                                                key={index}
-                                                className="rounded-lg border bg-card p-4 space-y-3 overflow-hidden"
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-semibold">Topics</h3>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={showAllSubtopicContents}
+                                                className="text-xs"
                                             >
-                                                <div className="flex items-center justify-between">
-                                                    <h4 className="font-semibold text-lg">{topicRow.topic}</h4>
-                                                    {topicRow.duration && (
-                                                        <Badge variant="outline">{topicRow.duration}</Badge>
+                                                <Eye className="h-3.5 w-3.5 mr-1.5" />
+                                                Show All Contents
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={hideAllSubtopicContents}
+                                                className="text-xs"
+                                            >
+                                                <EyeOff className="h-3.5 w-3.5 mr-1.5" />
+                                                Hide All Contents
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {course.topics.map((topicRow: any, index: number) => {
+                                            // Calculate total hours from subtopics
+                                            const totalHours = topicRow.subtopics?.reduce((sum: number, subtopic: any) => {
+                                                const hours = typeof subtopic === 'object' && subtopic?.hours 
+                                                    ? parseFloat(String(subtopic.hours)) || 0 
+                                                    : 0;
+                                                return sum + hours;
+                                            }, 0) || 0;
+                                            
+                                            const totalHoursNum = typeof totalHours === 'number' ? totalHours : parseFloat(String(totalHours)) || 0;
+                                            
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="rounded-lg border bg-card p-4 space-y-4 overflow-hidden"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="font-semibold text-lg">{topicRow.topic}</h4>
+                                                        {totalHoursNum > 0 && (
+                                                            <Badge variant="outline">
+                                                                {totalHoursNum === Math.floor(totalHoursNum) 
+                                                                    ? `${totalHoursNum} hrs` 
+                                                                    : `${totalHoursNum.toFixed(1)} hrs`}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {topicRow.subtopics && topicRow.subtopics.length > 0 && (
+                                                        <div className="space-y-3">
+                                                            <h5 className="font-medium text-sm text-muted-foreground">Subtopics</h5>
+                                                            <div className="space-y-3 pl-4 border-l-2 border-muted">
+                                                                {topicRow.subtopics.map((subtopic: any, i: number) => {
+                                                                    // Handle both new format (object) and old format (string) for backward compatibility
+                                                                    const subtopicName = typeof subtopic === 'object' ? subtopic.name : subtopic;
+                                                                    const subtopicContent = typeof subtopic === 'object' ? subtopic.content : null;
+                                                                    const subtopicHoursRaw = typeof subtopic === 'object' ? subtopic.hours : 0;
+                                                                    const subtopicHours = typeof subtopicHoursRaw === 'number' 
+                                                                        ? subtopicHoursRaw 
+                                                                        : parseFloat(String(subtopicHoursRaw)) || 0;
+                                                                    const contentKey = `${index}-${i}`;
+                                                                    const isContentVisible = visibleSubtopicContents.has(contentKey);
+                                                                    
+                                                                    return (
+                                                                        <div key={i} className="space-y-2">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="text-sm font-medium text-foreground">{subtopicName}</span>
+                                                                                    {subtopicContent && (
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="ghost"
+                                                                                            size="sm"
+                                                                                            onClick={() => toggleSubtopicContent(index, i)}
+                                                                                            className="h-6 px-2 text-xs"
+                                                                                        >
+                                                                                            {isContentVisible ? (
+                                                                                                <>
+                                                                                                    <ChevronUp className="h-3 w-3 mr-1" />
+                                                                                                </>
+                                                                                            ) : (
+                                                                                                <>
+                                                                                                    <ChevronDown className="h-3 w-3 mr-1" />
+                                                                                                </>
+                                                                                            )}
+                                                                                        </Button>
+                                                                                    )}
+                                                                                </div>
+                                                                                {subtopicHours > 0 && (
+                                                                                    <Badge variant="secondary" className="text-xs">
+                                                                                        {subtopicHours === Math.floor(subtopicHours)
+                                                                                            ? `${subtopicHours} hrs`
+                                                                                            : `${subtopicHours.toFixed(1)} hrs`}
+                                                                                    </Badge>
+                                                                                )}
+                                                                            </div>
+                                                                            {subtopicContent && isContentVisible && (
+                                                                                <div 
+                                                                                    className="prose prose-sm max-w-none text-xs overflow-x-auto break-words text-muted-foreground rounded-md p-4"
+                                                                                    style={{ backgroundColor: '#eee' }}
+                                                                                    dangerouslySetInnerHTML={{ __html: subtopicContent }}
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
-                                                
-                                                {topicRow.subtopics && topicRow.subtopics.length > 0 && (
-                                                    <div>
-                                                        <h5 className="font-medium mb-2 text-sm text-muted-foreground">Subtopics</h5>
-                                                        <ul className="list-disc list-inside space-y-1">
-                                                            {topicRow.subtopics.map((subtopic: string, i: number) => (
-                                                                <li key={i} className="text-sm">{subtopic}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-
-                                                {topicRow.content && (
-                                                    <div className="mt-3 pt-3 border-t overflow-hidden">
-                                                        <div 
-                                                            className="prose max-w-none text-sm overflow-x-auto break-words"
-                                                            dangerouslySetInnerHTML={{ __html: topicRow.content }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -263,4 +382,3 @@ export default function ShowCourse() {
         </AppLayout>
     );
 }
-

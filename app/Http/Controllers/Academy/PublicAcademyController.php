@@ -342,9 +342,26 @@ class PublicAcademyController extends Controller
                         }
 
                         if (is_array($topic)) {
+                            // Calculate total hours from subtopics (new format)
+                            $totalHours = 0;
+                            if (isset($topic['subtopics']) && is_array($topic['subtopics'])) {
+                                $totalHours = collect($topic['subtopics'])
+                                    ->sum(function ($subtopic) {
+                                        if (is_array($subtopic) && isset($subtopic['hours'])) {
+                                            return (float) ($subtopic['hours'] ?? 0);
+                                        }
+                                        return 0;
+                                    });
+                            }
+                            
+                            // Fallback to old duration format if no subtopics
+                            $duration = $totalHours > 0 
+                                ? ($totalHours == (int) $totalHours ? (int) $totalHours : number_format($totalHours, 1)) . ' hrs'
+                                : ($topic['duration'] ?? null);
+
                             return [
                                 'label' => $topic['topic'] ?? $topic['title'] ?? null,
-                                'duration' => $topic['duration'] ?? null,
+                                'duration' => $duration,
                             ];
                         }
 
@@ -370,24 +387,78 @@ class PublicAcademyController extends Controller
             ]
             : null;
 
+        // Only include content if user is enrolled and payment is verified
+        $includeContent = $enrollment 
+            && $course->course_type === 'self_paced'
+            && (bool) $enrollment->payment_verified 
+            && (bool) $enrollment->is_paid;
+
         $topics = [];
 
         if ($course->course_type === 'self_paced') {
             $topics = collect($course->topics ?: [])
-                ->map(function ($topic) {
+                ->map(function ($topic, int $index) use ($includeContent) {
                     if (is_string($topic)) {
                         return [
-                            'label' => $topic,
+                            'id' => $index + 1,
+                            'order' => $index,
+                            'title' => $topic,
                             'duration' => null,
                             'subtopics' => [],
                         ];
                     }
 
                     if (is_array($topic)) {
+                        $title = $topic['topic'] ?? $topic['title'] ?? null;
+                        
+                        // Handle new structure: subtopics are objects with name, content, hours
+                        // Also handle old structure for backward compatibility
+                        $subtopics = collect($topic['subtopics'] ?? [])
+                            ->map(function ($subtopic, int $subIndex) use ($includeContent) {
+                                // New format: subtopic is an object with name, content, hours
+                                if (is_array($subtopic) && isset($subtopic['name'])) {
+                                    return [
+                                        'id' => $subIndex + 1,
+                                        'order' => $subIndex,
+                                        'name' => $subtopic['name'] ?? '',
+                                        'content' => $includeContent ? ($subtopic['content'] ?? '') : '',
+                                        'hours' => (float) ($subtopic['hours'] ?? 0),
+                                        'duration' => ($subtopic['hours'] ?? 0) > 0 
+                                            ? (($subtopic['hours'] == (int) $subtopic['hours']) 
+                                                ? (int) $subtopic['hours'] 
+                                                : number_format((float) $subtopic['hours'], 1)) . ' hrs'
+                                            : null,
+                                    ];
+                                }
+                                // Old format: subtopic is a string
+                                if (is_string($subtopic) && trim($subtopic) !== '') {
+                                    return [
+                                        'id' => $subIndex + 1,
+                                        'order' => $subIndex,
+                                        'name' => $subtopic,
+                                        'content' => '',
+                                        'hours' => 0,
+                                        'duration' => null,
+                                    ];
+                                }
+                                return null;
+                            })
+                            ->filter()
+                            ->values()
+                            ->all();
+
+                        // Calculate total hours from subtopics
+                        $totalHours = collect($subtopics)->sum('hours');
+                        $duration = $totalHours > 0 
+                            ? ($totalHours == (int) $totalHours ? (int) $totalHours : number_format($totalHours, 1)) . ' hrs'
+                            : ($topic['duration'] ?? null);
+
                         return [
-                            'label' => $topic['topic'] ?? $topic['title'] ?? null,
-                            'duration' => $topic['duration'] ?? null,
-                            'subtopics' => $topic['subtopics'] ?? [],
+                            'id' => $index + 1,
+                            'order' => $index,
+                            'title' => $title,
+                            'duration' => $duration,
+                            'subtopics' => $subtopics,
                         ];
                     }
 

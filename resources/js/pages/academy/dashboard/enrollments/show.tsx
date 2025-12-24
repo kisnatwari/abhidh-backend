@@ -13,6 +13,7 @@ type TopicProgressItem = {
     status: 'not_started' | 'in_progress' | 'completed';
     lastViewedAt?: string | null;
     completedAt?: string | null;
+    subtopics?: SubtopicProgress[];
 };
 
 type CourseProgressPayload = {
@@ -20,12 +21,27 @@ type CourseProgressPayload = {
     summary?: {
         completedCount: number;
         topicCount: number;
+        subtopicCount?: number;
         percentComplete: number;
         nextTopic?: {
             order: number;
             title: string;
         } | null;
+        nextSubtopicIndex?: number | null;
     } | null;
+};
+
+type Subtopic = {
+    name: string;
+    content: string;
+    hours: number;
+};
+
+type SubtopicProgress = {
+    index: number;
+    status: TopicProgressItem['status'];
+    lastViewedAt?: string | null;
+    completedAt?: string | null;
 };
 
 type SelfPacedTopic = {
@@ -34,10 +50,16 @@ type SelfPacedTopic = {
     title: string | null;
     duration: string | null;
     content: string | null;
-    subtopics: string[];
+    subtopics: (string | Subtopic)[];
     status?: TopicProgressItem['status'];
     lastViewedAt?: string | null;
     completedAt?: string | null;
+    subtopicsProgress?: Array<{
+        index: number;
+        status: TopicProgressItem['status'];
+        lastViewedAt?: string | null;
+        completedAt?: string | null;
+    }>;
 };
 
 type GuidedSession = {
@@ -137,11 +159,31 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
             return [] as SelfPacedTopic[];
         }
 
+        // Get progress items which contain subtopic progress
+        const progressItems = enrollment.course?.progress?.items || [];
+
         return enrollment.course.topics
             .filter((topic): topic is SelfPacedTopic => topic !== null && typeof topic === 'object')
             .map((topic, index) => {
                 const order = typeof topic.order === 'number' ? topic.order : index;
                 const progress = progressLookup[order];
+                
+                // Find progress item for this topic (contains subtopics progress)
+                const topicProgressItem = progressItems.find((item: any) => item.order === order);
+
+                // Parse subtopics - handle both old format (strings) and new format (objects)
+                const parsedSubtopics = Array.isArray(topic.subtopics) 
+                    ? topic.subtopics.filter(Boolean).map((st) => {
+                        if (typeof st === 'string') return st;
+                        if (typeof st === 'object' && st !== null && 'name' in st) {
+                            return { name: st.name || '', content: st.content || '', hours: st.hours || 0 };
+                        }
+                        return null;
+                    }).filter(Boolean) as (string | Subtopic)[]
+                    : [];
+
+                // Get subtopics progress from progress item
+                const subtopicsProgress = topicProgressItem?.subtopics || [];
 
                 return {
                     ...topic,
@@ -150,11 +192,12 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                     status: progress?.status ?? 'not_started',
                     lastViewedAt: progress?.lastViewedAt ?? null,
                     completedAt: progress?.completedAt ?? null,
-                    subtopics: Array.isArray(topic.subtopics) ? topic.subtopics.filter(Boolean) : [],
+                    subtopics: parsedSubtopics,
+                    subtopicsProgress: subtopicsProgress,
                 };
             })
             .sort((a, b) => a.order - b.order);
-    }, [enrollment.course?.topics, isSelfPaced, progressLookup]);
+    }, [enrollment.course?.topics, enrollment.course?.progress?.items, isSelfPaced, progressLookup]);
 
     const syllabusEntries = useMemo(() => {
         if (isSelfPaced || !enrollment.course?.syllabus) {
@@ -173,62 +216,104 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
     }, [enrollment.course?.syllabus, isSelfPaced]);
 
     const [activeTopicIndex, setActiveTopicIndex] = useState(0);
+    const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
     const [pendingAction, setPendingAction] = useState<'start' | 'complete' | null>(null);
+    // Track if we've initialized the active topic/subtopic to prevent useEffect from resetting on every render
+    const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
         if (!isSelfPaced) {
             setActiveTopicIndex(0);
+            setActiveSubtopicIndex(0);
+            setInitialized(true);
             return;
         }
 
         if (contentLocked) {
             setActiveTopicIndex(0);
+            setActiveSubtopicIndex(0);
+            setInitialized(true);
             return;
         }
 
-        if (typeof progressSummary?.nextTopic?.order === 'number') {
-            const target = Math.min(progressSummary.nextTopic.order, Math.max(topics.length - 1, 0));
-            setActiveTopicIndex(target);
+        // Only auto-set on initial load, not on every update
+        if (initialized) {
             return;
         }
 
+        // Find next incomplete subtopic
+        if (typeof progressSummary?.nextTopic?.order === 'number' && typeof progressSummary?.nextSubtopicIndex === 'number') {
+            const topicIndex = topics.findIndex(t => t.order === progressSummary.nextTopic?.order);
+            if (topicIndex >= 0) {
+                setActiveTopicIndex(topicIndex);
+                setActiveSubtopicIndex(progressSummary.nextSubtopicIndex);
+                setInitialized(true);
+                return;
+            }
+        }
+
+        // Find first incomplete subtopic
+        for (let tIdx = 0; tIdx < topics.length; tIdx++) {
+            const topic = topics[tIdx];
+            const subtopics = topic.subtopics || [];
+            for (let sIdx = 0; sIdx < subtopics.length; sIdx++) {
+                const subtopicProgress = topic.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === sIdx);
+                if (!subtopicProgress || subtopicProgress.status !== 'completed') {
+                    setActiveTopicIndex(tIdx);
+                    setActiveSubtopicIndex(sIdx);
+                    setInitialized(true);
+                    return;
+                }
+            }
+        }
+
+        // Default to first topic, first subtopic
         if (topics.length > 0) {
-            setActiveTopicIndex(Math.max(topics.length - 1, 0));
-        } else {
             setActiveTopicIndex(0);
+            setActiveSubtopicIndex(0);
+            setInitialized(true);
         }
-    }, [isSelfPaced, contentLocked, progressSummary?.nextTopic?.order, topics.length]);
+    }, [isSelfPaced, contentLocked, progressSummary?.nextTopic?.order, progressSummary?.nextSubtopicIndex, topics.length, initialized]);
 
     const currentTopic = topics[activeTopicIndex] ?? null;
-    const currentProgress = currentTopic ? progressLookup[currentTopic.order] : undefined;
+    const currentSubtopic = currentTopic?.subtopics?.[activeSubtopicIndex] ?? null;
+    const currentSubtopicProgress = currentTopic?.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === activeSubtopicIndex);
+    
+    // Get current subtopic as object
+    const currentSubtopicObj = currentSubtopic && typeof currentSubtopic === 'object' 
+        ? currentSubtopic 
+        : currentSubtopic 
+            ? { name: currentSubtopic, content: '', hours: 0 }
+            : null;
+
     const topicCount = progressSummary?.topicCount ?? topics.length;
+    const subtopicCount = progressSummary?.subtopicCount ?? topics.reduce((sum, t) => sum + (t.subtopics?.length || 0), 0);
     const percentComplete = progressSummary?.percentComplete ?? 0;
-    const isCourseComplete =
-        progressSummary?.topicCount && progressSummary.topicCount > 0
-            ? progressSummary.completedCount >= progressSummary.topicCount
-            : false;
-    const activeStatus = currentTopic?.status ?? 'not_started';
+    const isCourseComplete = subtopicCount > 0 && (progressSummary?.completedCount ?? 0) >= subtopicCount;
+    
+    const activeStatus: TopicProgressItem['status'] = (currentSubtopicProgress?.status ?? 'not_started') as TopicProgressItem['status'];
     const ActiveStatusIcon = topicStatusIcon[activeStatus];
     const activeStatusStyle = topicStatusStyles[activeStatus];
-    const lastUpdatedLabel = currentTopic
-        ? currentTopic.completedAt
-            ? `Completed ${new Date(currentTopic.completedAt).toLocaleString()}`
-            : currentTopic.lastViewedAt
-                ? `Last viewed ${new Date(currentTopic.lastViewedAt).toLocaleString()}`
+    const lastUpdatedLabel = currentSubtopicProgress
+        ? currentSubtopicProgress.completedAt
+            ? `Completed ${new Date(currentSubtopicProgress.completedAt).toLocaleString()}`
+            : currentSubtopicProgress.lastViewedAt
+                ? `Last viewed ${new Date(currentSubtopicProgress.lastViewedAt).toLocaleString()}`
                 : null
         : null;
 
-    const postToProgress = (action: 'start' | 'complete', topic: SelfPacedTopic, options: { preserveActive?: boolean } = {}) => {
+    const postToSubtopicProgress = (action: 'start' | 'complete', topicIndex: number, subtopicIndex: number, options: { preserveActive?: boolean } = {}) => {
         if (pendingAction) {
             return;
         }
 
+        const topic = topics[topicIndex];
+        if (!topic) return;
+
         const endpoint =
             action === 'start'
-                ? `/academy/my-enrollments/${enrollment.id}/topics/${topic.order}/start`
-                : `/academy/my-enrollments/${enrollment.id}/topics/${topic.order}/complete`;
-
-        const targetIndex = topics.findIndex((item) => item.order === topic.order);
+                ? `/academy/my-enrollments/${enrollment.id}/topics/${topic.order}/subtopics/${subtopicIndex}/start`
+                : `/academy/my-enrollments/${enrollment.id}/topics/${topic.order}/subtopics/${subtopicIndex}/complete`;
 
         setPendingAction(action);
         router.post(
@@ -236,33 +321,84 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
             {},
             {
                 preserveScroll: true,
+                preserveState: true,
                 onFinish: () => setPendingAction(null),
                 onSuccess: () => {
-                    if (targetIndex < 0) {
-                        return;
-                    }
-
+                    // Always mark as initialized to prevent useEffect from resetting
+                    setInitialized(true);
                     if (options.preserveActive) {
-                        setActiveTopicIndex((current) => (current === targetIndex ? current : targetIndex));
+                        // Keep current active topic/subtopic - already set before API call
                     } else {
-                        setActiveTopicIndex(targetIndex);
+                        // Move to next incomplete subtopic or next topic
+                        const nextSubtopic = findNextIncompleteSubtopic(topicIndex, subtopicIndex);
+                        if (nextSubtopic) {
+                            setActiveTopicIndex(nextSubtopic.topicIndex);
+                            setActiveSubtopicIndex(nextSubtopic.subtopicIndex);
+                        }
                     }
                 },
             },
         );
     };
 
-    const handleTopicSelect = (index: number) => {
-        if (index < 0 || index >= topics.length) {
+    const findNextIncompleteSubtopic = (startTopicIndex: number, startSubtopicIndex: number) => {
+        // Check remaining subtopics in current topic
+        const currentTopic = topics[startTopicIndex];
+        if (currentTopic) {
+            for (let sIdx = startSubtopicIndex + 1; sIdx < (currentTopic.subtopics?.length || 0); sIdx++) {
+                const progress = currentTopic.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === sIdx);
+                if (!progress || progress.status !== 'completed') {
+                    return { topicIndex: startTopicIndex, subtopicIndex: sIdx };
+                }
+            }
+        }
+
+        // Check next topics
+        for (let tIdx = startTopicIndex + 1; tIdx < topics.length; tIdx++) {
+            const topic = topics[tIdx];
+            const subtopics = topic.subtopics || [];
+            for (let sIdx = 0; sIdx < subtopics.length; sIdx++) {
+                const progress = topic.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === sIdx);
+                if (!progress || progress.status !== 'completed') {
+                    return { topicIndex: tIdx, subtopicIndex: sIdx };
+                }
+            }
+        }
+
+        return null;
+    };
+
+    const handleTopicSelect = (topicIndex: number) => {
+        if (topicIndex < 0 || topicIndex >= topics.length) {
             return;
         }
 
-        setActiveTopicIndex(index);
+        setActiveTopicIndex(topicIndex);
+        // Reset to first subtopic when selecting a topic
+        setActiveSubtopicIndex(0);
+    };
 
-        const topic = topics[index];
+    const handleSubtopicSelect = (topicIndex: number, subtopicIndex: number) => {
+        if (topicIndex < 0 || topicIndex >= topics.length) {
+            return;
+        }
 
-        if (!contentLocked && topic.status === 'not_started') {
-            postToProgress('start', topic, { preserveActive: true });
+        const topic = topics[topicIndex];
+        if (!topic || subtopicIndex < 0 || subtopicIndex >= (topic.subtopics?.length || 0)) {
+            return;
+        }
+
+        // Set state immediately (before API call)
+        setActiveTopicIndex(topicIndex);
+        setActiveSubtopicIndex(subtopicIndex);
+        setInitialized(true); // Mark as initialized so useEffect doesn't reset it
+
+        // Auto-start subtopic if not started (this will trigger an API call)
+        if (!contentLocked) {
+            const progress = topic.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === subtopicIndex);
+            if (!progress || progress.status === 'not_started') {
+                postToSubtopicProgress('start', topicIndex, subtopicIndex, { preserveActive: true });
+            }
         }
     };
 
@@ -320,84 +456,48 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                 </div>
 
                 <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <CardContent className="space-y-5 px-6 py-6">
-                        <div className="space-y-2">
-                            <h1 className="text-2xl font-semibold text-slate-900">{enrollment.course?.title ?? 'Course removed'}</h1>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                                {enrollment.course?.program?.name ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium">
-                                        <Sparkles className="h-3.5 w-3.5 text-primary" />
-                                        {enrollment.course.program.name}
+                    <CardContent className="space-y-4 px-5 py-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="space-y-2 flex-1 min-w-0">
+                                <h1 className="text-xl font-semibold text-slate-900">{enrollment.course?.title ?? 'Course removed'}</h1>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                    {enrollment.course?.program?.name ? (
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
+                                            <Sparkles className="h-3 w-3 text-primary" />
+                                            {enrollment.course.program.name}
+                                        </span>
+                                    ) : null}
+                                    {enrollment.course?.duration ? (
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
+                                            <Clock className="h-3 w-3 text-primary" />
+                                            {enrollment.course.duration}
+                                        </span>
+                                    ) : null}
+                                    <span className="text-slate-400">·</span>
+                                    <span className="text-slate-500">
+                                        {enrollmentDate ? formatDistanceToNow(enrollmentDate, { addSuffix: true }) : 'Recently enrolled'}
                                     </span>
-                                ) : null}
-                                {enrollment.course?.duration ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium">
-                                        <Clock className="h-3.5 w-3.5 text-primary" />
-                                        {enrollment.course.duration}
-                                    </span>
-                                ) : null}
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-5 py-4">
-                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Enrollment date</p>
-                                <p className="mt-2 text-sm font-semibold text-slate-900">
-                                    {enrollmentDate ? enrollmentDate.toLocaleString() : 'Not available'}
-                                </p>
-                                {enrollmentDate && (
-                                    <p className="text-xs text-slate-500">
-                                        {formatDistanceToNow(enrollmentDate, {
-                                            addSuffix: true,
-                                        })}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-5 py-4">
-                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Payment status</p>
-                                <p className="mt-2 text-sm font-semibold text-slate-900">{enrollment.isPaid ? 'Paid' : 'Unpaid'}</p>
+                            <div className="flex flex-wrap items-center gap-2">
                                 {enrollment.paymentVerified ? (
-                                    <span className="mt-2 inline-flex items-center gap-2 text-xs text-emerald-600">
-                                        <CheckCircle className="h-4 w-4" />
-                                        Verified by academy team
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                                        <CheckCircle className="h-3 w-3" />
+                                        Verified
                                     </span>
                                 ) : (
-                                    <span className="mt-2 inline-flex items-center gap-2 text-xs text-amber-600">
-                                        <BookOpen className="h-4 w-4" />
-                                        Awaiting verification
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                                        <BookOpen className="h-3 w-3" />
+                                        Pending
                                     </span>
                                 )}
                             </div>
                         </div>
-
-                        {enrollment.course?.description ? (
-                            <div className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Course overview</p>
-                                <p className="text-sm leading-relaxed text-slate-600">{enrollment.course.description}</p>
-                            </div>
-                        ) : null}
 
                         {contentLocked ? (
                             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                                 <p className="font-semibold">Content locked</p>
-                                <p className="mt-1">{lockReason}</p>
-                                <p className="mt-2 text-xs text-amber-600">
-                                    Tip: once verification is complete, refresh this dashboard to access every lesson instantly.
-                                </p>
-                            </div>
-                        ) : null}
-
-                        {enrollment.course?.keyLearningObjectives?.length ? (
-                            <div className="space-y-3">
-                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Key learning objectives</p>
-                                <ul className="space-y-2 text-sm text-slate-600">
-                                    {enrollment.course.keyLearningObjectives.map((item, index) => (
-                                        <li key={index} className="flex items-start gap-2">
-                                            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <p className="mt-1 text-xs">{lockReason}</p>
                             </div>
                         ) : null}
                     </CardContent>
@@ -405,52 +505,40 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
 
                 {!contentLocked && isSelfPaced && progressSummary && topicCount > 0 ? (
                     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                        <CardContent className="flex flex-col gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between">
-                            <div className="space-y-3">
-                                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Learning progress</p>
-                                <div className="flex items-baseline gap-3">
-                                    <span className="text-3xl font-semibold text-slate-900">{percentComplete}%</span>
+                        <CardContent className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-2xl font-semibold text-slate-900">{percentComplete}%</span>
                                     <span className="text-xs text-slate-500">
-                                        {progressSummary.completedCount} of {progressSummary.topicCount} topics complete
+                                        {progressSummary.completedCount} / {subtopicCount} subtopics
                                     </span>
                                 </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 md:w-80">
+                                <div className="h-2 flex-1 min-w-[120px] max-w-xs overflow-hidden rounded-full bg-slate-200">
                                     <div
                                         className="h-full rounded-full bg-primary transition-all duration-500"
                                         style={{ width: `${percentComplete}%` }}
                                     />
                                 </div>
-                                {isCourseComplete ? (
-                                    <p className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600">
-                                        <CheckCircle className="h-3.5 w-3.5" />
-                                        All modules completed – amazing work!
-                                    </p>
-                                ) : progressSummary.nextTopic ? (
-                                    <p className="inline-flex items-center gap-2 text-xs text-slate-600">
-                                        <Sparkles className="h-3.5 w-3.5 text-primary" />
-                                        Next module: {progressSummary.nextTopic.title}
-                                    </p>
-                                ) : null}
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="rounded-full px-4 py-2 text-sm"
-                                    onClick={handleResume}
-                                    disabled={topics.length === 0 || pendingAction !== null}
-                                >
-                                    {isCourseComplete ? 'Review modules' : 'Resume learning'}
-                                </Button>
-                            </div>
+                            {isCourseComplete ? (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                    Completed
+                                </span>
+                            ) : progressSummary.nextTopic ? (
+                                <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+                                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                                    Next: {progressSummary.nextTopic.title}
+                                </span>
+                            ) : null}
                         </CardContent>
                     </Card>
                 ) : null}
 
                 {isSelfPaced ? (
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
-                        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                            <CardContent className="space-y-4 px-5 py-5">
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+                        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-6 lg:self-start">
+                            <CardContent className="space-y-4 px-4 py-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                                         <LayoutList className="h-4 w-4 text-primary" />
@@ -463,59 +551,97 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                     ) : null}
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {topics.length === 0 ? (
                                         <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-8 text-center text-xs text-slate-500">
                                             Course topics will appear here once published.
                                         </div>
                                     ) : (
-                                        topics.map((topic, index) => (
-                                            <button
-                                                key={topic.id}
-                                                type="button"
-                                                onClick={() => handleTopicSelect(index)}
-                                                className={cn(
-                                                    'w-full rounded-lg border px-3 py-3 text-left transition',
-                                                    index === activeTopicIndex
-                                                        ? 'border-primary/40 bg-primary/10 text-primary'
-                                                        : 'border-slate-200 hover:border-primary/30 hover:bg-primary/5',
-                                                    topic.status === 'completed' && index !== activeTopicIndex
-                                                        ? 'border-emerald-200 bg-emerald-50/70 text-emerald-700'
-                                                        : '',
-                                                    topic.status === 'in_progress' && index !== activeTopicIndex
-                                                        ? 'border-amber-200 bg-amber-50/70 text-amber-700'
-                                                        : '',
-                                                )}
-                                            >
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center justify-between gap-3 text-sm font-semibold">
-                                                        <span>{topic.title}</span>
-                                                        {topic.duration ? (
-                                                            <span className="text-xs font-medium text-slate-500">{topic.duration}</span>
-                                                        ) : null}
-                                                    </div>
-                                                    {topic.subtopics?.length ? (
-                                                        <p className="text-[11px] text-slate-500">
-                                                            {topic.subtopics.slice(0, 2).join(' · ')}
-                                                            {topic.subtopics.length > 2 ? '…' : ''}
-                                                        </p>
-                                                    ) : null}
-                                                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                                                        <span
-                                                            className={cn(
-                                                                'h-1.5 w-1.5 rounded-full',
-                                                                topic.status === 'completed'
-                                                                    ? 'bg-emerald-500'
-                                                                    : topic.status === 'in_progress'
-                                                                        ? 'bg-amber-500'
-                                                                        : 'bg-slate-300',
-                                                            )}
-                                                        />
-                                                        <span>{topicStatusLabels[topic.status ?? 'not_started']}</span>
-                                                    </div>
+                                        topics.map((topic, topicIndex) => {
+                                            const isTopicActive = topicIndex === activeTopicIndex;
+                                            const subtopics = topic.subtopics || [];
+                                            
+                                            return (
+                                                <div key={topic.id} className="space-y-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleTopicSelect(topicIndex)}
+                                                        className={cn(
+                                                            'w-full rounded-lg border px-3 py-2.5 text-left transition',
+                                                            isTopicActive
+                                                                ? 'border-primary/40 bg-primary/10 text-primary'
+                                                                : 'border-slate-200 hover:border-primary/30 hover:bg-primary/5',
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className="text-sm font-semibold">{topic.title}</span>
+                                                            <span
+                                                                className={cn(
+                                                                    'h-1.5 w-1.5 rounded-full',
+                                                                    topic.status === 'completed'
+                                                                        ? 'bg-emerald-500'
+                                                                        : topic.status === 'in_progress'
+                                                                            ? 'bg-amber-500'
+                                                                            : 'bg-slate-300',
+                                                                )}
+                                                            />
+                                                        </div>
+                                                    </button>
+                                                    
+                                                    {isTopicActive && subtopics.length > 0 && (
+                                                        <div className="ml-2 space-y-1 border-l-2 border-primary/20 pl-3">
+                                                            {subtopics.map((subtopic, subtopicIndex) => {
+                                                                const subtopicName = typeof subtopic === 'string' ? subtopic : subtopic.name;
+                                                                const subtopicHours = typeof subtopic === 'string' ? null : subtopic.hours;
+                                                                const isSubtopicActive = topicIndex === activeTopicIndex && subtopicIndex === activeSubtopicIndex;
+                                                                const subtopicProgress = topic.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === subtopicIndex);
+                                                                const subtopicStatus = subtopicProgress?.status ?? 'not_started';
+                                                                
+                                                                return (
+                                                                    <button
+                                                                        key={subtopicIndex}
+                                                                        type="button"
+                                                                        onClick={() => handleSubtopicSelect(topicIndex, subtopicIndex)}
+                                                                        className={cn(
+                                                                            'w-full rounded-md border px-2.5 py-2 text-left text-xs transition',
+                                                                            isSubtopicActive
+                                                                                ? 'border-primary/50 bg-primary/15 text-primary font-medium'
+                                                                                : 'border-slate-200 hover:border-primary/30 hover:bg-primary/5',
+                                                                            subtopicStatus === 'completed'
+                                                                                ? 'border-emerald-200 bg-emerald-50/50'
+                                                                                : subtopicStatus === 'in_progress'
+                                                                                    ? 'border-amber-200 bg-amber-50/50'
+                                                                                    : '',
+                                                                        )}
+                                                                    >
+                                                                        <div className="flex items-center justify-between gap-2">
+                                                                            <span className="flex-1 truncate">{subtopicName}</span>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                {subtopicHours !== null && subtopicHours > 0 && (
+                                                                                    <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                                                                        {subtopicHours}h
+                                                                                    </span>
+                                                                                )}
+                                                                                <span
+                                                                                    className={cn(
+                                                                                        'h-1 w-1 rounded-full',
+                                                                                        subtopicStatus === 'completed'
+                                                                                            ? 'bg-emerald-500'
+                                                                                            : subtopicStatus === 'in_progress'
+                                                                                                ? 'bg-amber-500'
+                                                                                                : 'bg-slate-300',
+                                                                                    )}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </button>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             </CardContent>
@@ -523,50 +649,40 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
 
                         <div className="space-y-4 min-w-0">
                             <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                                <CardContent className="space-y-4 px-6 py-6">
-                                    {currentTopic ? (
+                                <CardContent className="space-y-5 px-8 py-8">
+                                    {currentTopic && currentSubtopicObj ? (
                                         <>
-                                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                                <div>
-                                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Module {activeTopicIndex + 1}</p>
-                                                    <h2 className="mt-1 text-lg font-semibold text-slate-900">{currentTopic.title}</h2>
-                                                </div>
-                                                {currentTopic.duration ? (
-                                                    <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-                                                        <Clock className="h-3.5 w-3.5" />
-                                                        {currentTopic.duration}
-                                                    </span>
-                                                ) : null}
-                                            </div>
-
-                                            <div className="flex flex-wrap items-center gap-3 text-xs">
-                                                <span
-                                                    className={cn(
-                                                        'inline-flex items-center gap-2 rounded-full border px-3 py-1 font-semibold',
-                                                        activeStatusStyle,
+                                            <div className="space-y-3 border-b border-slate-100 pb-5">
+                                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-1">
+                                                            {currentTopic.title} · Subtopic {activeSubtopicIndex + 1}
+                                                        </p>
+                                                        <h2 className="text-2xl font-semibold text-slate-900 leading-tight">{currentSubtopicObj.name}</h2>
+                                                    </div>
+                                                    {currentSubtopicObj.hours > 0 && (
+                                                        <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary whitespace-nowrap">
+                                                            <Clock className="h-3.5 w-3.5" />
+                                                            {currentSubtopicObj.hours} {currentSubtopicObj.hours === 1 ? 'hour' : 'hours'}
+                                                        </span>
                                                     )}
-                                                >
-                                                    <ActiveStatusIcon className="h-3.5 w-3.5" />
-                                                    {topicStatusLabels[activeStatus]}
-                                                </span>
-                                                {lastUpdatedLabel ? (
-                                                    <span className="text-[11px] text-slate-500">{lastUpdatedLabel}</span>
-                                                ) : null}
-                                            </div>
-
-                                            {currentTopic.subtopics?.length ? (
-                                                <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Subtopics</p>
-                                                    <ul className="space-y-1">
-                                                        {currentTopic.subtopics.map((subtopic, subIndex) => (
-                                                            <li key={subIndex} className="flex items-start gap-2 text-xs">
-                                                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/70" />
-                                                                {subtopic}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
                                                 </div>
-                                            ) : null}
+
+                                                <div className="flex flex-wrap items-center gap-2 text-xs">
+                                                    <span
+                                                        className={cn(
+                                                            'inline-flex items-center gap-2 rounded-full border px-2.5 py-1 font-semibold',
+                                                            activeStatusStyle,
+                                                        )}
+                                                    >
+                                                        <ActiveStatusIcon className="h-3 w-3" />
+                                                        {topicStatusLabels[activeStatus]}
+                                                    </span>
+                                                    {lastUpdatedLabel ? (
+                                                        <span className="text-[11px] text-slate-500">{lastUpdatedLabel}</span>
+                                                    ) : null}
+                                                </div>
+                                            </div>
 
                                             {contentLocked ? (
                                                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-6 text-sm text-amber-700">
@@ -576,50 +692,49 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                             ) : (
                                                 <>
                                                     <article
-                                                        className="course-content space-y-4 text-sm leading-relaxed text-slate-700 [&>h1]:text-xl [&>h1]:font-semibold [&>h2]:text-lg [&>h2]:font-semibold [&>h3]:text-base [&>h3]:font-semibold [&>p]:mt-3 [&>p:first-of-type]:mt-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>pre]:overflow-x-auto [&>pre]:rounded-lg [&>pre]:bg-slate-900/90 [&>pre]:p-4 [&>pre]:text-xs [&>pre]:text-slate-100 [&>pre]:whitespace-pre-wrap [&>pre]:wrap-break-word [&>pre>code]:whitespace-pre-wrap [&>pre>code]:wrap-break-word"
+                                                        className="prose prose-slate prose-base max-w-none leading-relaxed text-slate-700"
                                                         dangerouslySetInnerHTML={{
-                                                            __html: currentTopic.content ?? '<p>No written content available yet for this topic.</p>',
+                                                            __html: currentSubtopicObj.content || '<p>No written content available yet for this subtopic.</p>',
                                                         }}
                                                     />
 
-                                                    <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                                                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                                                            {lastUpdatedLabel ? <span>{lastUpdatedLabel}</span> : null}
-                                                            {currentTopic.completedAt ? (
-                                                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
+                                                    <div className="flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                                            {currentSubtopicProgress?.completedAt ? (
+                                                                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600">
                                                                     <CheckCircle className="h-3.5 w-3.5" />
                                                                     Completed
                                                                 </span>
-                                                            ) : currentTopic.status === 'in_progress' ? (
-                                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-600">
+                                                            ) : currentSubtopicProgress?.status === 'in_progress' ? (
+                                                                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600">
                                                                     <Play className="h-3.5 w-3.5" />
                                                                     In progress
                                                                 </span>
                                                             ) : null}
+                                                            {lastUpdatedLabel ? <span className="text-[11px]">{lastUpdatedLabel}</span> : null}
                                                         </div>
                                                         <div className="flex flex-wrap gap-2">
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                className="flex items-center gap-2"
-                                                                onClick={() => currentTopic && postToProgress('start', currentTopic, { preserveActive: true })}
-                                                                disabled={
-                                                                    !currentTopic ||
-                                                                    currentTopic.status === 'in_progress' ||
-                                                                    currentTopic.status === 'completed' ||
-                                                                    pendingAction !== null
-                                                                }
-                                                            >
-                                                                <Play className="h-4 w-4" />
-                                                                Mark in progress
-                                                            </Button>
+                                                             <Button
+                                                                 type="button"
+                                                                 variant="outline"
+                                                                 className="flex items-center gap-2"
+                                                                 onClick={() => postToSubtopicProgress('start', activeTopicIndex, activeSubtopicIndex, { preserveActive: true })}
+                                                                 disabled={
+                                                                     !currentSubtopicObj ||
+                                                                     currentSubtopicProgress?.status === 'in_progress' ||
+                                                                     pendingAction !== null
+                                                                 }
+                                                             >
+                                                                 <Play className="h-4 w-4" />
+                                                                 Mark in progress
+                                                             </Button>
                                                             <Button
                                                                 type="button"
                                                                 className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
-                                                                onClick={() => currentTopic && postToProgress('complete', currentTopic)}
+                                                                onClick={() => postToSubtopicProgress('complete', activeTopicIndex, activeSubtopicIndex)}
                                                                 disabled={
-                                                                    !currentTopic ||
-                                                                    currentTopic.status === 'completed' ||
+                                                                    !currentSubtopicObj ||
+                                                                    currentSubtopicProgress?.status === 'completed' ||
                                                                     pendingAction !== null
                                                                 }
                                                             >
@@ -633,19 +748,29 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                         </>
                                     ) : (
                                         <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-12 text-center text-sm text-slate-500">
-                                            Select a topic from the outline to start learning.
+                                            Select a subtopic from the outline to start learning.
                                         </div>
                                     )}
                                 </CardContent>
                             </Card>
 
-                            {topics.length > 0 ? (
+                            {currentTopic && currentTopic.subtopics && currentTopic.subtopics.length > 0 ? (
                                 <div className="flex flex-wrap justify-between gap-3">
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={() => handleTopicSelect(activeTopicIndex - 1)}
-                                        disabled={activeTopicIndex === 0}
+                                        onClick={() => {
+                                            if (activeSubtopicIndex > 0) {
+                                                handleSubtopicSelect(activeTopicIndex, activeSubtopicIndex - 1);
+                                            } else if (activeTopicIndex > 0) {
+                                                const prevTopic = topics[activeTopicIndex - 1];
+                                                const prevSubtopicCount = prevTopic?.subtopics?.length || 0;
+                                                if (prevSubtopicCount > 0) {
+                                                    handleSubtopicSelect(activeTopicIndex - 1, prevSubtopicCount - 1);
+                                                }
+                                            }
+                                        }}
+                                        disabled={activeTopicIndex === 0 && activeSubtopicIndex === 0}
                                         className="flex items-center gap-2"
                                     >
                                         <ArrowLeft className="h-4 w-4" />
@@ -653,11 +778,22 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                     </Button>
                                     <Button
                                         type="button"
-                                        onClick={() => handleTopicSelect(activeTopicIndex + 1)}
-                                        disabled={activeTopicIndex >= topics.length - 1}
+                                        onClick={() => {
+                                            const currentTopic = topics[activeTopicIndex];
+                                            const currentSubtopicCount = currentTopic?.subtopics?.length || 0;
+                                            if (activeSubtopicIndex < currentSubtopicCount - 1) {
+                                                handleSubtopicSelect(activeTopicIndex, activeSubtopicIndex + 1);
+                                            } else if (activeTopicIndex < topics.length - 1) {
+                                                handleSubtopicSelect(activeTopicIndex + 1, 0);
+                                            }
+                                        }}
+                                        disabled={
+                                            activeTopicIndex >= topics.length - 1 &&
+                                            activeSubtopicIndex >= (currentTopic?.subtopics?.length || 0) - 1
+                                        }
                                         className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
                                     >
-                                        Next lesson
+                                        Next subtopic
                                         <Play className="h-4 w-4" />
                                     </Button>
                                 </div>

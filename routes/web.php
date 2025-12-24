@@ -38,6 +38,8 @@ Route::middleware(['auth', 'verified'])->prefix('academy')->name('academy.')->gr
     Route::get('my-enrollments/{enrollment}', [StudentDashboardController::class, 'showEnrollment'])->name('dashboard.enrollments.show');
     Route::post('my-enrollments/{enrollment}/topics/{topic}/start', [StudentDashboardController::class, 'markTopicStarted'])->name('dashboard.enrollments.topics.start');
     Route::post('my-enrollments/{enrollment}/topics/{topic}/complete', [StudentDashboardController::class, 'markTopicCompleted'])->name('dashboard.enrollments.topics.complete');
+    Route::post('my-enrollments/{enrollment}/topics/{topic}/subtopics/{subtopic}/start', [StudentDashboardController::class, 'markSubtopicStarted'])->name('dashboard.enrollments.subtopics.start');
+    Route::post('my-enrollments/{enrollment}/topics/{topic}/subtopics/{subtopic}/complete', [StudentDashboardController::class, 'markSubtopicCompleted'])->name('dashboard.enrollments.subtopics.complete');
     Route::get('profile', [StudentDashboardController::class, 'profile'])->name('dashboard.profile');
     Route::put('profile', [StudentDashboardController::class, 'updateProfile'])->name('dashboard.profile.update');
 });

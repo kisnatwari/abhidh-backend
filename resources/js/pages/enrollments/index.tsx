@@ -82,6 +82,7 @@ export default function EnrollmentsIndex() {
       search: s.get('search') ?? '',
       status: s.get('status') ?? 'all',
       isPaid: s.get('is_paid') ?? 'all',
+      courseId: s.get('course_id') ?? '',
       perPage: s.get('per_page') ?? String(pager.per_page || 10),
     };
   }, [pager.per_page]);
@@ -89,6 +90,7 @@ export default function EnrollmentsIndex() {
   const [search, setSearch] = useState(initial.search);
   const [status, setStatus] = useState(initial.status);
   const [isPaid, setIsPaid] = useState(initial.isPaid);
+  const [courseId, setCourseId] = useState(initial.courseId);
   const [perPage, setPerPage] = useState<string>(initial.perPage);
 
   // Debounce search a bit so it doesn't navigate every keystroke
@@ -96,13 +98,14 @@ export default function EnrollmentsIndex() {
     const id = setTimeout(() => navigate(1), 350);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status, isPaid, perPage]);
+  }, [search, status, isPaid, courseId, perPage]);
 
   const navigate = (page: number | null) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (status && status !== 'all') params.set('status', status);
     if (isPaid && isPaid !== 'all') params.set('is_paid', isPaid);
+    if (courseId) params.set('course_id', courseId);
     if (perPage) params.set('per_page', perPage);
     if (page && page > 1) params.set('page', String(page));
 

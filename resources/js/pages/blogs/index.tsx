@@ -133,7 +133,7 @@ export default function BlogsIndex() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Options</SelectItem>
-                <SelectItem value="Abhidh">Abhidh</SelectItem>
+                <SelectItem value="Abhidh Group">Abhidh Group</SelectItem>
                 <SelectItem value="Abhidh Creative">Abhidh Creative</SelectItem>
                 <SelectItem value="Abhidh Academy">Abhidh Academy</SelectItem>
               </SelectContent>

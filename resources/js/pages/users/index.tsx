@@ -185,7 +185,6 @@ export default function UsersIndex() {
                 <TableHead className="w-[30%]">Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>API Tokens</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -193,7 +192,7 @@ export default function UsersIndex() {
             <TableBody>
               {pager.data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                     No users found.
                   </TableCell>
                 </TableRow>
@@ -225,10 +224,6 @@ export default function UsersIndex() {
                         Unverified
                       </Badge>
                     )}
-                  </TableCell>
-
-                  <TableCell>
-                    <Badge variant="outline">{user.tokens_count} tokens</Badge>
                   </TableCell>
 
                   <TableCell>

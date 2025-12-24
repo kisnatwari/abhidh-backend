@@ -78,15 +78,25 @@ class CourseController extends Controller
                 }
                 
                 if (!$isEnrolled && $course->topics) {
-                    // Remove content from each topic, but keep all other fields
-                    // (description, learnings, outcomes, topics, subtopics all remain)
+                    // Remove content from topics and subtopics, but keep all other fields
                     $topics = $course->topics;
                     if (is_array($topics)) {
                         $topics = array_map(function ($topic) {
-                            // Keep all fields except 'content'
+                            // Remove content from topic level (old format)
                             if (isset($topic['content'])) {
                                 unset($topic['content']);
                             }
+                            
+                            // Remove content from subtopics (new format)
+                            if (isset($topic['subtopics']) && is_array($topic['subtopics'])) {
+                                $topic['subtopics'] = array_map(function ($subtopic) {
+                                    if (is_array($subtopic) && isset($subtopic['content'])) {
+                                        unset($subtopic['content']);
+                                    }
+                                    return $subtopic;
+                                }, $topic['subtopics']);
+                            }
+                            
                             return $topic;
                         }, $topics);
                         $course->setAttribute('topics', $topics);
@@ -148,14 +158,25 @@ class CourseController extends Controller
             }
             
             if (!$isEnrolled && $course->topics) {
-                // Remove content from each topic, but keep all other fields
+                // Remove content from topics and subtopics, but keep all other fields
                 $topics = $course->topics;
                 if (is_array($topics)) {
                     $topics = array_map(function ($topic) {
-                        // Keep all fields except 'content' (description, learnings, outcomes, topics, subtopics all remain)
+                        // Remove content from topic level (old format)
                         if (isset($topic['content'])) {
                             unset($topic['content']);
                         }
+                        
+                        // Remove content from subtopics (new format)
+                        if (isset($topic['subtopics']) && is_array($topic['subtopics'])) {
+                            $topic['subtopics'] = array_map(function ($subtopic) {
+                                if (is_array($subtopic) && isset($subtopic['content'])) {
+                                    unset($subtopic['content']);
+                                }
+                                return $subtopic;
+                            }, $topic['subtopics']);
+                        }
+                        
                         return $topic;
                     }, $topics);
                     $course->setAttribute('topics', $topics);

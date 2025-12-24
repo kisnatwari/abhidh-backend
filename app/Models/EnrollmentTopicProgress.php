@@ -15,6 +15,7 @@ class EnrollmentTopicProgress extends Model
     protected $fillable = [
         'enrollment_id',
         'topic_index',
+        'subtopic_index',
         'topic_key',
         'status',
         'last_viewed_at',

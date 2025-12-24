@@ -10,9 +10,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import InputError from '@/components/input-error';
 import RichTextEditor from '@/components/rich-text-editor';
-import { Loader2, Plus, Trash2, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Plus, Trash2, ArrowLeft, ChevronDown, ChevronUp, GraduationCap, BookOpen, Check } from 'lucide-react';
 import type { BreadcrumbItem } from '@/types';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 type SyllabusRow = {
     session: number;
@@ -22,11 +22,15 @@ type SyllabusRow = {
     hours: number;
 };
 
+type SubtopicRow = {
+    name: string;
+    content: string;
+    hours: number;
+};
+
 type TopicRow = {
     topic: string;
-    subtopics: string[];
-    duration: string;
-    content: string;
+    subtopics: SubtopicRow[];
 };
 
 type PageProps = {
@@ -64,17 +68,56 @@ export default function EditCourse() {
     const [expandedSessions, setExpandedSessions] = useState<Set<number>>(new Set([0]));
     
     // Self-paced course state
-    const [topics, setTopics] = useState<TopicRow[]>(
-        course.topics && course.topics.length > 0
-            ? course.topics.map((row: any) => ({
+    // Helper function to normalize old format to new format
+    const normalizeTopics = (topicsData: any[]): TopicRow[] => {
+        if (!topicsData || topicsData.length === 0) {
+            return [{ topic: '', subtopics: [{ name: '', content: '', hours: 0 }] }];
+        }
+        
+        return topicsData.map((row: any) => {
+            // Handle old format (subtopics as strings, content/duration at topic level)
+            if (row.subtopics && Array.isArray(row.subtopics) && row.subtopics.length > 0) {
+                // Check if first subtopic is a string (old format) or object (new format)
+                if (typeof row.subtopics[0] === 'string') {
+                    // Old format: convert string subtopics to objects
+                    return {
+                        topic: row.topic || '',
+                        subtopics: row.subtopics.map((sub: string, idx: number) => ({
+                            name: sub || '',
+                            content: idx === 0 ? (row.content || '') : '',
+                            hours: idx === 0 ? (parseFloat(row.duration?.replace(/[^\d.]/g, '') || '0') || 0) : 0,
+                        })),
+                    };
+                } else {
+                    // New format: already objects
+                    return {
+                        topic: row.topic || '',
+                        subtopics: row.subtopics.map((sub: any) => ({
+                            name: sub.name || sub.topic || '',
+                            content: sub.content || '',
+                            hours: sub.hours || 0,
+                        })),
+                    };
+                }
+            }
+            // No subtopics or empty: create default
+            return {
                 topic: row.topic || '',
-                subtopics: row.subtopics && row.subtopics.length > 0 ? row.subtopics : [''],
-                duration: row.duration || '',
-                content: row.content || '',
-            }))
-            : [{ topic: '', subtopics: [''], duration: '', content: '' }]
-    );
+                subtopics: [{ name: '', content: '', hours: 0 }],
+            };
+        });
+    };
+    
+    const [topics, setTopics] = useState<TopicRow[]>(normalizeTopics(course.topics));
     const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set([0]));
+    const [expandedSubtopics, setExpandedSubtopics] = useState<Set<string>>(() => {
+        // Expand first subtopic of first topic by default
+        const initial = new Set<string>();
+        if (topics.length > 0 && topics[0].subtopics.length > 0) {
+            initial.add('0-0');
+        }
+        return initial;
+    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Courses', href: CourseController.index().url },
@@ -166,14 +209,41 @@ export default function EditCourse() {
 
     // Self-paced course helpers (same as create.tsx)
     const addTopic = () => {
-        const newTopics = [...topics, { topic: '', subtopics: [''], duration: '', content: '' }];
+        const newTopicIndex = topics.length;
+        const newTopics = [...topics, { topic: '', subtopics: [{ name: '', content: '', hours: 0 }] }];
         setTopics(newTopics);
-        setExpandedTopics(new Set([...expandedTopics, newTopics.length - 1]));
+        setExpandedTopics(new Set([...expandedTopics, newTopicIndex]));
+        // Expand all subtopics by default
+        const newExpandedSubtopics = new Set(expandedSubtopics);
+        newTopics[newTopicIndex].subtopics.forEach((_, subtopicIndex) => {
+            newExpandedSubtopics.add(`${newTopicIndex}-${subtopicIndex}`);
+        });
+        setExpandedSubtopics(newExpandedSubtopics);
     };
 
     const removeTopic = (index: number) => {
         if (topics.length === 1) return;
         setTopics(topics.filter((_, i) => i !== index));
+        
+        // Remove expanded state for this topic's subtopics
+        const newExpandedSubtopics = new Set(expandedSubtopics);
+        topics[index].subtopics.forEach((_, subtopicIndex) => {
+            newExpandedSubtopics.delete(`${index}-${subtopicIndex}`);
+        });
+        
+        // Reindex remaining expanded subtopics
+        const reindexedSubtopics = new Set<string>();
+        newExpandedSubtopics.forEach(key => {
+            const [tIdx, sIdx] = key.split('-').map(Number);
+            if (tIdx < index) {
+                reindexedSubtopics.add(key);
+            } else if (tIdx > index) {
+                reindexedSubtopics.add(`${tIdx - 1}-${sIdx}`);
+            }
+        });
+        setExpandedSubtopics(reindexedSubtopics);
+        
+        // Reindex expanded topics
         const newExpanded = new Set<number>();
         expandedTopics.forEach(topicIndex => {
             if (topicIndex < index) {
@@ -187,10 +257,24 @@ export default function EditCourse() {
 
     const toggleTopic = (index: number) => {
         const newExpanded = new Set(expandedTopics);
-        if (newExpanded.has(index)) {
+        const isCurrentlyExpanded = newExpanded.has(index);
+        
+        if (isCurrentlyExpanded) {
             newExpanded.delete(index);
+            // Collapse all subtopics when topic is collapsed
+            const newExpandedSubtopics = new Set(expandedSubtopics);
+            topics[index].subtopics.forEach((_, subtopicIndex) => {
+                newExpandedSubtopics.delete(`${index}-${subtopicIndex}`);
+            });
+            setExpandedSubtopics(newExpandedSubtopics);
         } else {
             newExpanded.add(index);
+            // Expand all subtopics when topic is expanded
+            const newExpandedSubtopics = new Set(expandedSubtopics);
+            topics[index].subtopics.forEach((_, subtopicIndex) => {
+                newExpandedSubtopics.add(`${index}-${subtopicIndex}`);
+            });
+            setExpandedSubtopics(newExpandedSubtopics);
         }
         setExpandedTopics(newExpanded);
     };
@@ -207,13 +291,50 @@ export default function EditCourse() {
 
     const addSubtopic = (topicIndex: number) => {
         const newTopics = [...topics];
-        newTopics[topicIndex].subtopics.push('');
+        newTopics[topicIndex].subtopics.push({ name: '', content: '', hours: 0 });
         setTopics(newTopics);
+        // Auto-expand the new subtopic
+        const subtopicKey = `${topicIndex}-${newTopics[topicIndex].subtopics.length - 1}`;
+        setExpandedSubtopics(new Set([...expandedSubtopics, subtopicKey]));
     };
 
     const removeSubtopic = (topicIndex: number, subtopicIndex: number) => {
         const newTopics = [...topics];
         newTopics[topicIndex].subtopics = newTopics[topicIndex].subtopics.filter((_, i) => i !== subtopicIndex);
+        setTopics(newTopics);
+        // Remove from expanded set
+        const subtopicKey = `${topicIndex}-${subtopicIndex}`;
+        const newExpanded = new Set(expandedSubtopics);
+        newExpanded.delete(subtopicKey);
+        // Reindex remaining expanded subtopics
+        const reindexed = new Set<string>();
+        newExpanded.forEach(key => {
+            const [tIdx, sIdx] = key.split('-').map(Number);
+            if (tIdx === topicIndex && sIdx > subtopicIndex) {
+                reindexed.add(`${tIdx}-${sIdx - 1}`);
+            } else if (tIdx === topicIndex && sIdx < subtopicIndex) {
+                reindexed.add(key);
+            } else if (tIdx !== topicIndex) {
+                reindexed.add(key);
+            }
+        });
+        setExpandedSubtopics(reindexed);
+    };
+
+    const toggleSubtopic = (topicIndex: number, subtopicIndex: number) => {
+        const subtopicKey = `${topicIndex}-${subtopicIndex}`;
+        const newExpanded = new Set(expandedSubtopics);
+        if (newExpanded.has(subtopicKey)) {
+            newExpanded.delete(subtopicKey);
+        } else {
+            newExpanded.add(subtopicKey);
+        }
+        setExpandedSubtopics(newExpanded);
+    };
+
+    const updateSubtopic = (topicIndex: number, subtopicIndex: number, field: keyof SubtopicRow, value: any) => {
+        const newTopics = [...topics];
+        (newTopics[topicIndex].subtopics[subtopicIndex] as any)[field] = value;
         setTopics(newTopics);
     };
 
@@ -256,20 +377,74 @@ export default function EditCourse() {
                                 {/* Course Type */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="course_type">Course Type *</Label>
-                                    <Select 
-                                        name="course_type" 
-                                        value={courseType}
-                                        onValueChange={(v: 'guided' | 'self_paced') => setCourseType(v)}
-                                        required
-                                    >
-                                        <SelectTrigger className="w-full max-w-md">
-                                            <SelectValue placeholder="Select course type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="guided">Guided Course (School/College/Corporate)</SelectItem>
-                                            <SelectItem value="self_paced">Self-Paced Course</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCourseType('guided')}
+                                            className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${
+                                                courseType === 'guided'
+                                                    ? 'border-primary bg-primary/5 shadow-sm'
+                                                    : 'border-border bg-card hover:border-primary/50'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div className={`rounded-full p-3 ${
+                                                    courseType === 'guided'
+                                                        ? 'bg-primary/10 text-primary'
+                                                        : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    <GraduationCap className="h-6 w-6" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold text-base mb-1">Guided Course</h3>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        School/College/Corporate
+                                                    </p>
+                                                </div>
+                                                {courseType === 'guided' && (
+                                                    <div className="absolute top-4 right-4">
+                                                        <div className="rounded-full bg-primary p-1">
+                                                            <Check className="h-4 w-4 text-primary-foreground" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setCourseType('self_paced')}
+                                            className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${
+                                                courseType === 'self_paced'
+                                                    ? 'border-primary bg-primary/5 shadow-sm'
+                                                    : 'border-border bg-card hover:border-primary/50'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div className={`rounded-full p-3 ${
+                                                    courseType === 'self_paced'
+                                                        ? 'bg-primary/10 text-primary'
+                                                        : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    <BookOpen className="h-6 w-6" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold text-base mb-1">Self-Paced Course</h3>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Learn at your own pace
+                                                    </p>
+                                                </div>
+                                                {courseType === 'self_paced' && (
+                                                    <div className="absolute top-4 right-4">
+                                                        <div className="rounded-full bg-primary p-1">
+                                                            <Check className="h-4 w-4 text-primary-foreground" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="course_type" value={courseType} />
                                     <InputError message={errors.course_type} />
                                 </div>
 
@@ -739,6 +914,36 @@ export default function EditCourse() {
                                                             </Button>
                                                         </div>
 
+                                                        {/* Hidden inputs for collapsed topic and all its subtopics */}
+                                                        {!expandedTopics.has(topicIndex) && (
+                                                            <>
+                                                                <input
+                                                                    type="hidden"
+                                                                    name={`topics[${topicIndex}][topic]`}
+                                                                    value={topicRow.topic || ''}
+                                                                />
+                                                                {topicRow.subtopics.map((subtopic: any, subtopicIndex: number) => (
+                                                                    <React.Fragment key={subtopicIndex}>
+                                                                        <input
+                                                                            type="hidden"
+                                                                            name={`topics[${topicIndex}][subtopics][${subtopicIndex}][name]`}
+                                                                            value={subtopic.name || ''}
+                                                                        />
+                                                                        <input
+                                                                            type="hidden"
+                                                                            name={`topics[${topicIndex}][subtopics][${subtopicIndex}][hours]`}
+                                                                            value={subtopic.hours || 0}
+                                                                        />
+                                                                        <input
+                                                                            type="hidden"
+                                                                            name={`topics[${topicIndex}][subtopics][${subtopicIndex}][content]`}
+                                                                            value={subtopic.content || ''}
+                                                                        />
+                                                                    </React.Fragment>
+                                                                ))}
+                                                            </>
+                                                        )}
+
                                                         {expandedTopics.has(topicIndex) && (
                                                             <div className="space-y-4 pl-6 border-l-2 border-muted">
                                                                 <div className="grid gap-2">
@@ -753,65 +958,130 @@ export default function EditCourse() {
                                                                     />
                                                                 </div>
 
-                                                                <div className="grid gap-2 max-w-xs">
-                                                                    <Label>Duration</Label>
-                                                                    <Input
-                                                                        name={`topics[${topicIndex}][duration]`}
-                                                                        value={topicRow.duration}
-                                                                        onChange={(e) => updateTopic(topicIndex, 'duration', e.target.value)}
-                                                                        placeholder="e.g., 1.5 hrs, 2 hrs"
-                                                                    />
-                                                                </div>
-
-                                                                <div className="grid gap-2">
-                                                                    <Label>Subtopics</Label>
-                                                                    <div className="space-y-2">
-                                                                        {topicRow.subtopics.map((subtopic, subtopicIndex) => (
-                                                                            <div key={subtopicIndex} className="flex gap-2">
-                                                                                <Input
-                                                                                    name={`topics[${topicIndex}][subtopics][${subtopicIndex}]`}
-                                                                                    value={subtopic}
-                                                                                    onChange={(e) => {
-                                                                                        const newSubtopics = [...topicRow.subtopics];
-                                                                                        newSubtopics[subtopicIndex] = e.target.value;
-                                                                                        updateTopic(topicIndex, 'subtopics', newSubtopics);
-                                                                                    }}
-                                                                                    placeholder="Subtopic"
-                                                                                    className="flex-1"
-                                                                                />
-                                                                                {topicRow.subtopics.length > 1 && (
-                                                                                    <Button
-                                                                                        type="button"
-                                                                                        variant="outline"
-                                                                                        size="icon"
-                                                                                        onClick={() => removeSubtopic(topicIndex, subtopicIndex)}
-                                                                                    >
-                                                                                        <Trash2 className="h-4 w-4" />
-                                                                                    </Button>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
+                                                                <div className="grid gap-4">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <Label className="text-base font-semibold">Subtopics *</Label>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() => addSubtopic(topicIndex)}
+                                                                        >
+                                                                            <Plus className="h-4 w-4 mr-2" />
+                                                                            Add Subtopic
+                                                                        </Button>
                                                                     </div>
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={() => addSubtopic(topicIndex)}
-                                                                        className="w-fit"
-                                                                    >
-                                                                        <Plus className="h-4 w-4 mr-2" />
-                                                                        Add Subtopic
-                                                                    </Button>
-                                                                </div>
 
-                                                                <div className="grid gap-2">
-                                                                    <Label>Content *</Label>
-                                                                    <RichTextEditor
-                                                                        value={topicRow.content}
-                                                                        onChange={(value) => updateTopic(topicIndex, 'content', value)}
-                                                                        placeholder="Write the full content for this topic..."
-                                                                        name={`topics[${topicIndex}][content]`}
-                                                                    />
+                                                                    <div className="space-y-4">
+                                                                        {topicRow.subtopics.map((subtopic, subtopicIndex) => {
+                                                                            const subtopicKey = `${topicIndex}-${subtopicIndex}`;
+                                                                            const isExpanded = expandedSubtopics.has(subtopicKey);
+                                                                            
+                                                                            return (
+                                                                                <div
+                                                                                    key={subtopicIndex}
+                                                                                    className="rounded-lg border bg-card p-4 space-y-4"
+                                                                                    style={{ backgroundColor: '#eee' }}
+                                                                                >
+                                                                                    <div className="flex items-center justify-between">
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="ghost"
+                                                                                            size="sm"
+                                                                                            onClick={() => toggleSubtopic(topicIndex, subtopicIndex)}
+                                                                                            className="flex items-center gap-2"
+                                                                                        >
+                                                                                            {isExpanded ? (
+                                                                                                <ChevronUp className="h-4 w-4" />
+                                                                                            ) : (
+                                                                                                <ChevronDown className="h-4 w-4" />
+                                                                                            )}
+                                                                                            Subtopic {subtopicIndex + 1}
+                                                                                            {subtopic.name && (
+                                                                                                <span className="text-muted-foreground"> - {subtopic.name}</span>
+                                                                                            )}
+                                                                                        </Button>
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="outline"
+                                                                                            size="icon"
+                                                                                            onClick={() => removeSubtopic(topicIndex, subtopicIndex)}
+                                                                                            disabled={topicRow.subtopics.length === 1}
+                                                                                        >
+                                                                                            <Trash2 className="h-4 w-4" />
+                                                                                        </Button>
+                                                                                    </div>
+
+                                                                                    {/* Hidden inputs for collapsed subtopic */}
+                                                                                    {!isExpanded && (
+                                                                                        <>
+                                                                                            <input
+                                                                                                type="hidden"
+                                                                                                name={`topics[${topicIndex}][subtopics][${subtopicIndex}][name]`}
+                                                                                                value={subtopic.name || ''}
+                                                                                            />
+                                                                                            <input
+                                                                                                type="hidden"
+                                                                                                name={`topics[${topicIndex}][subtopics][${subtopicIndex}][hours]`}
+                                                                                                value={subtopic.hours || 0}
+                                                                                            />
+                                                                                            <input
+                                                                                                type="hidden"
+                                                                                                name={`topics[${topicIndex}][subtopics][${subtopicIndex}][content]`}
+                                                                                                value={subtopic.content || ''}
+                                                                                            />
+                                                                                        </>
+                                                                                    )}
+
+                                                                                    {isExpanded && (
+                                                                                        <div className="space-y-4 pl-6 border-l-2 border-muted">
+                                                                                            <div className="grid gap-2">
+                                                                                                <Label>Subtopic Name *</Label>
+                                                                                                <Input
+                                                                                                    name={`topics[${topicIndex}][subtopics][${subtopicIndex}][name]`}
+                                                                                                    value={subtopic.name}
+                                                                                                    onChange={(e) => updateSubtopic(topicIndex, subtopicIndex, 'name', e.target.value)}
+                                                                                                    placeholder="e.g., Understanding SEO Basics"
+                                                                                                    required
+                                                                                                    className="w-full"
+                                                                                                />
+                                                                                                <InputError message={errors[`topics.${topicIndex}.subtopics.${subtopicIndex}.name` as keyof typeof errors]} />
+                                                                                            </div>
+
+                                                                                            <div className="grid gap-2 max-w-xs">
+                                                                                                <Label>Hours *</Label>
+                                                                                                <Input
+                                                                                                    type="number"
+                                                                                                    step="0.5"
+                                                                                                    min="0"
+                                                                                                    name={`topics[${topicIndex}][subtopics][${subtopicIndex}][hours]`}
+                                                                                                    value={subtopic.hours || ''}
+                                                                                                    onChange={(e) => updateSubtopic(topicIndex, subtopicIndex, 'hours', Number(e.target.value) || 0)}
+                                                                                                    placeholder="e.g., 1.5"
+                                                                                                    required
+                                                                                                />
+                                                                                                <InputError message={errors[`topics.${topicIndex}.subtopics.${subtopicIndex}.hours` as keyof typeof errors]} />
+                                                                                            </div>
+
+                                                                                            <div className="grid gap-2">
+                                                                                                <Label>Content *</Label>
+                                                                                                <RichTextEditor
+                                                                                                    value={subtopic.content}
+                                                                                                    onChange={(value) => updateSubtopic(topicIndex, subtopicIndex, 'content', value)}
+                                                                                                    placeholder="Write the full content for this subtopic..."
+                                                                                                    name={`topics[${topicIndex}][subtopics][${subtopicIndex}][content]`}
+                                                                                                />
+                                                                                                <InputError message={errors[`topics.${topicIndex}.subtopics.${subtopicIndex}.content` as keyof typeof errors]} />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                    {topicRow.subtopics.length === 0 && (
+                                                                        <p className="text-sm text-muted-foreground">Add at least one subtopic to this topic.</p>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )}

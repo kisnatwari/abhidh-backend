@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { hexToRgba } from '@/lib/colors';
 import { cn } from '@/lib/utils';
-import { ArrowUpRight, Clock, Sparkles, DollarSign } from 'lucide-react';
+import { ArrowUpRight, Clock, Sparkles, Banknote } from 'lucide-react';
 
 export type CourseResource = {
     id: number;
@@ -129,7 +129,7 @@ export const CourseCard = ({ course, className, showProgramBadge = true }: Cours
 
                     {course.price && isSelfPaced ? (
                         <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-                            <DollarSign className="h-5 w-5 text-primary" />
+                            <Banknote className="h-5 w-5 text-primary" />
                             <div className="flex-1">
                                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">Price</p>
                                 <p className="text-xl font-bold text-primary">

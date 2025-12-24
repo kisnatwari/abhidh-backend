@@ -1,7 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { cn } from '@/lib/utils';
-import { GraduationCap, Home, LayoutDashboard, LogOut, Notebook, UserCheck } from 'lucide-react';
+import { GraduationCap, Home, LayoutDashboard, LogOut, Notebook, UserCheck, MessageCircle } from 'lucide-react';
 
 type NavItem = {
     label: string;
@@ -58,12 +58,21 @@ export default function StudentDashboardLayout({ children }: PropsWithChildren) 
 
                     <div className="mt-auto space-y-3">
                         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-                            Need help? Contact your mentor or the academy team for personalised guidance.
+                            <p className="mb-2">Need help? Contact your mentor or the academy team for personalised guidance.</p>
+                            <a
+                                href="https://wa.me/9779841080407"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                            >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                                Chat on WhatsApp
+                            </a>
                         </div>
                         <div className="space-y-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
                             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Quick actions</p>
                             <Link
-                                href="/academy"
+                                href="/"
                                 className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-primary/30 hover:text-primary"
                             >
                                 <span className="inline-flex items-center gap-2">

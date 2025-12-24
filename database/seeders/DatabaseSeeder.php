@@ -17,20 +17,21 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::firstOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'abhidhgroup@gmail.com'],
             [
-                'name' => 'Test User',
-                'password' => Hash::make('password'),
+                'name' => 'Abhidh Group Admin',
+                'password' => Hash::make('AbhidhGroup@2025'),
                 'email_verified_at' => now(),
             ]
         );
 
-        // Seed courses with proper data for both course types
-        $this->call([
-            CourseSeeder::class,
-            ServiceSeeder::class,
-            TeamSeeder::class,
-            TrainerSeeder::class,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'kisnatwari@gmail.com'],
+            [
+                'name' => 'Krishna Tiwari',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }

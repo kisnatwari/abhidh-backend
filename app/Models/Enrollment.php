@@ -24,6 +24,9 @@ class Enrollment extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'integer',
+        'course_id' => 'integer',
+        'verified_by' => 'integer',
         'enrollment_date' => 'datetime',
         'is_paid' => 'boolean',
         'payment_verified' => 'boolean',

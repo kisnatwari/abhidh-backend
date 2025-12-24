@@ -158,7 +158,7 @@ class StudentDashboardController extends Controller
     {
         $user = $request->user();
 
-        abort_if($enrollment->user_id !== $user->id, 404);
+        abort_if((int) $enrollment->user_id !== (int) $user->id, 404);
 
         $enrollment->load(['course.program']);
 
@@ -204,7 +204,7 @@ class StudentDashboardController extends Controller
     public function markTopicStarted(Request $request, Enrollment $enrollment, int $topic): RedirectResponse
     {
         $user = $request->user();
-        abort_if($enrollment->user_id !== $user->id, 404);
+        abort_if((int) $enrollment->user_id !== (int) $user->id, 404);
 
         $course = $enrollment->course()->firstOrFail();
         $this->ensureSelfPacedAccess($enrollment, $course);
@@ -221,7 +221,7 @@ class StudentDashboardController extends Controller
     public function markTopicCompleted(Request $request, Enrollment $enrollment, int $topic): RedirectResponse
     {
         $user = $request->user();
-        abort_if($enrollment->user_id !== $user->id, 404);
+        abort_if((int) $enrollment->user_id !== (int) $user->id, 404);
 
         $course = $enrollment->course()->firstOrFail();
         $this->ensureSelfPacedAccess($enrollment, $course);
@@ -238,7 +238,7 @@ class StudentDashboardController extends Controller
     public function markSubtopicStarted(Request $request, Enrollment $enrollment, int $topic, int $subtopic): RedirectResponse
     {
         $user = $request->user();
-        abort_if($enrollment->user_id !== $user->id, 404);
+        abort_if((int) $enrollment->user_id !== (int) $user->id, 404);
 
         $course = $enrollment->course()->firstOrFail();
         $this->ensureSelfPacedAccess($enrollment, $course);
@@ -256,7 +256,7 @@ class StudentDashboardController extends Controller
     public function markSubtopicCompleted(Request $request, Enrollment $enrollment, int $topic, int $subtopic): RedirectResponse
     {
         $user = $request->user();
-        abort_if($enrollment->user_id !== $user->id, 404);
+        abort_if((int) $enrollment->user_id !== (int) $user->id, 404);
 
         $course = $enrollment->course()->firstOrFail();
         $this->ensureSelfPacedAccess($enrollment, $course);

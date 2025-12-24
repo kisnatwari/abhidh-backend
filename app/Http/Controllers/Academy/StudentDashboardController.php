@@ -325,16 +325,16 @@ class StudentDashboardController extends Controller
                         return [
                             'index' => $subtopicIndex,
                             'status' => $subtopicProgress?->status ?? 'not_started',
-                            'lastViewedAt' => $subtopicProgress?->last_viewed_at ? $subtopicProgress->last_viewed_at->toDateTimeString() : null,
-                            'completedAt' => $subtopicProgress?->completed_at ? $subtopicProgress->completed_at->toDateTimeString() : null,
+                            'lastViewedAt' => $subtopicProgress?->last_viewed_at?->toDateTimeString(),
+                            'completedAt' => $subtopicProgress?->completed_at?->toDateTimeString(),
                         ];
                     })->all();
 
                     return [
                         'order' => $topic['order'],
                         'status' => $topicProgress?->status ?? 'not_started',
-                        'lastViewedAt' => $topicProgress?->last_viewed_at ? $topicProgress->last_viewed_at->toDateTimeString() : null,
-                        'completedAt' => $topicProgress?->completed_at ? $topicProgress->completed_at->toDateTimeString() : null,
+                        'lastViewedAt' => $topicProgress?->last_viewed_at?->toDateTimeString(),
+                        'completedAt' => $topicProgress?->completed_at?->toDateTimeString(),
                         'subtopics' => $subtopicsProgress,
                     ];
                 })->all();

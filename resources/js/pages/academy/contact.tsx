@@ -199,8 +199,8 @@ const Contact = ({ programOptions }: ContactProps) => {
                                     </p>
                                     <p>
                                         You can also email us directly at{' '}
-                                        <a href="mailto:info@abhidhgroup.com" className="font-semibold text-primary">
-                                            info@abhidhgroup.com
+                                        <a href="mailto:academy@abhidh.com" className="font-semibold text-primary">
+                                        academy@abhidh.com
                                         </a>
                                         .
                                     </p>

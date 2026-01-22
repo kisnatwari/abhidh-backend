@@ -60,7 +60,7 @@ export default function StudentDashboardLayout({ children }: PropsWithChildren) 
                         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
                             <p className="mb-2">Need help? Contact your mentor or the academy team for personalised guidance.</p>
                             <a
-                                href="https://wa.me/9779841080407"
+                                href="https://wa.me/9779801110981"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"

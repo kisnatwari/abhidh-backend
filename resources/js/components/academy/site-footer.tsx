@@ -15,7 +15,7 @@ const socials = [
     { icon: Linkedin, href: "https://www.linkedin.com/company/abhidhacademy", label: "LinkedIn" },
     { icon: Youtube, href: "https://www.youtube.com/@AbhidhAcademy", label: "YouTube" },
     { icon: Music, href: "https://www.tiktok.com/@abhidh.academy", label: "TikTok" },
-  ];
+];
 
 const SiteFooter = () => {
     const year = new Date().getFullYear();
@@ -66,7 +66,7 @@ const SiteFooter = () => {
                             <br />
                             academy@abhidh.com
                             <br />
-                            +977-9841080407
+                            +977-9801110981
                         </p>
                     </div>
                 </div>

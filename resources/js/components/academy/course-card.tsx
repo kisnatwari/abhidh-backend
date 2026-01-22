@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { hexToRgba } from '@/lib/colors';
-import { cn } from '@/lib/utils';
+import { cn, stripHtml } from '@/lib/utils';
 import { ArrowUpRight, Clock, Sparkles, Banknote } from 'lucide-react';
 
 export type CourseResource = {
@@ -42,8 +42,8 @@ export const CourseCard = ({ course, className, showProgramBadge = true }: Cours
 
     const topicHighlights = isSelfPaced
         ? course.topics
-              .map((topic) => topic.label)
-              .filter((label): label is string => Boolean(label))
+            .map((topic) => topic.label)
+            .filter((label): label is string => Boolean(label))
         : course.key_learning_objectives;
 
     const highlights = (topicHighlights.length > 0 ? topicHighlights : defaultHighlights).slice(0, 3);
@@ -93,8 +93,9 @@ export const CourseCard = ({ course, className, showProgramBadge = true }: Cours
                     <div className="space-y-3">
                         <h3 className="text-xl font-semibold text-foreground transition-colors group-hover:text-primary">{course.title}</h3>
                         <p className="text-sm text-muted-foreground/90 line-clamp-3">
-                            {course.description ??
-                                'A curated Abhidh Academy experience crafted with real-world projects and mentor feedback every step of the way.'}
+                            {course.description
+                                ? stripHtml(course.description)
+                                : 'A curated Abhidh Academy experience crafted with real-world projects and mentor feedback every step of the way.'}
                         </p>
                     </div>
                     <div className="space-y-2">
@@ -127,7 +128,7 @@ export const CourseCard = ({ course, className, showProgramBadge = true }: Cours
                         </span>
                     </div>
 
-                    {course.price && isSelfPaced ? (
+                    {course.price ? (
                         <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
                             <Banknote className="h-5 w-5 text-primary" />
                             <div className="flex-1">

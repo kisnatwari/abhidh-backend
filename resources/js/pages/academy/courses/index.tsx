@@ -4,7 +4,7 @@ import AcademyLayout from '@/layouts/academy-layout';
 import { CourseCard, CourseResource } from '@/components/academy/course-card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { cn, stripHtml } from '@/lib/utils';
 
 type ProgramResource = {
     id: number;
@@ -173,17 +173,17 @@ const CoursesPage = ({ programGroups, standaloneCourses, selectedProgramId }: Co
                                 const accent = program.color ?? '#2563eb';
                                 return (
                                     <TabsContent key={program.id} value={`program-${program.id}`} className="mt-12">
-                                        <div className="mb-10 space-y-4 rounded-2xl border-l-4 p-6 md:p-8 transition-colors duration-300" 
-                                             style={{ 
-                                                 borderLeftColor: accent,
-                                                 background: `linear-gradient(to right, ${accent}10, transparent)`,
-                                             }}>
+                                        <div className="mb-10 space-y-4 rounded-2xl border-l-4 p-6 md:p-8 transition-colors duration-300"
+                                            style={{
+                                                borderLeftColor: accent,
+                                                background: `linear-gradient(to right, ${accent}10, transparent)`,
+                                            }}>
                                             <div className="flex flex-wrap items-center gap-2">
                                                 {program.category_label && (
                                                     <Badge
                                                         className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow-sm"
-                                                        style={{ 
-                                                            backgroundColor: `${accent}20`, 
+                                                        style={{
+                                                            backgroundColor: `${accent}20`,
                                                             color: accent,
                                                             borderColor: `${accent}30`,
                                                         }}
@@ -199,8 +199,9 @@ const CoursesPage = ({ programGroups, standaloneCourses, selectedProgramId }: Co
                                                 {program.name}
                                             </h2>
                                             <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                                                {program.description ??
-                                                    'This Abhidh Academy program bundles the right mentors, templates, and milestones to guarantee skill outcomes.'}
+                                                {program.description
+                                                    ? stripHtml(program.description)
+                                                    : 'This Abhidh Academy program bundles the right mentors, templates, and milestones to guarantee skill outcomes.'}
                                             </p>
                                         </div>
                                         {courses.length > 0 ? (
@@ -319,8 +320,9 @@ const CoursesPage = ({ programGroups, standaloneCourses, selectedProgramId }: Co
                                                 {program.name}
                                             </h2>
                                             <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground/90">
-                                                {program.description ??
-                                                    'This Abhidh Academy program bundles the right mentors, templates, and milestones to guarantee skill outcomes.'}
+                                                {program.description
+                                                    ? stripHtml(program.description)
+                                                    : 'This Abhidh Academy program bundles the right mentors, templates, and milestones to guarantee skill outcomes.'}
                                             </p>
                                         </div>
                                         {courses.length > 0 ? (

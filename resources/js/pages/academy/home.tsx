@@ -96,7 +96,7 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                                 <Button
                                     size="lg"
-                                className="group relative h-auto overflow-hidden rounded-full bg-primary px-9 py-6 text-base font-semibold text-primary-foreground shadow-[0_20px_45px_-22px_rgba(18,40,90,0.45)] transition hover:bg-primary/90 hover:shadow-[0_26px_55px_-28px_rgba(18,40,90,0.55)]"
+                                    className="group relative h-auto overflow-hidden rounded-full bg-primary px-9 py-6 text-base font-semibold text-primary-foreground shadow-[0_20px_45px_-22px_rgba(18,40,90,0.45)] transition hover:bg-primary/90 hover:shadow-[0_26px_55px_-28px_rgba(18,40,90,0.55)]"
                                     asChild
                                 >
                                     <Link href="/academy/programs">
@@ -327,8 +327,9 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                                         <div className="space-y-3">
                                             <h3 className="text-2xl font-semibold text-foreground">{program.name}</h3>
                                             <p className="text-sm text-muted-foreground/90 line-clamp-4">
-                                                {program.description ??
-                                                    'This Abhidh Academy program brings together the right mentors, resources, and milestones for sustainable growth.'}
+                                                {program.description
+                                                    ? stripHtml(program.description)
+                                                    : 'This Abhidh Academy program brings together the right mentors, resources, and milestones for sustainable growth.'}
                                             </p>
                                         </div>
                                         <div className="mt-auto pt-2">

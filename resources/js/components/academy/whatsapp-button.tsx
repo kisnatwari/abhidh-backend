@@ -1,7 +1,7 @@
 import { MessageCircle } from 'lucide-react';
 
 const WhatsAppButton = () => {
-    const WHATSAPP_NUMBER = "9779841080407"; // Format: 1234567890 (without + or spaces)
+    const WHATSAPP_NUMBER = "9779801110981"; // Format: 1234567890 (without + or spaces)
     const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}`;
 
     return (

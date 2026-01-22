@@ -21,7 +21,7 @@ class CourseController extends Controller
         if ($request->has('search') && $request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -151,7 +151,7 @@ class CourseController extends Controller
     public function edit(Course $course)
     {
         $programs = Program::select('id', 'name')->get();
-        
+
         return Inertia::render('courses/edit', [
             'course' => $course,
             'programs' => $programs,

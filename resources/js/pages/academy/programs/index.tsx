@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { hexToRgba } from '@/lib/colors';
-import { cn, formatCategoryLabel } from '@/lib/utils';
+import { cn, formatCategoryLabel, stripHtml } from '@/lib/utils';
 import { ArrowRight, BookOpenCheck, Layers } from 'lucide-react';
 
 type ProgramResource = {
@@ -117,8 +117,9 @@ const Programs = ({ programs }: ProgramsProps) => {
                                         <div className="space-y-3">
                                             <h3 className="text-2xl font-semibold leading-tight text-foreground">{program.name}</h3>
                                             <p className="text-sm leading-relaxed text-muted-foreground/90 line-clamp-4">
-                                                {program.description ??
-                                                    'This program is curated by Abhidh Academy to drive measurable outcomes for learners.'}
+                                                {program.description
+                                                    ? stripHtml(program.description)
+                                                    : 'This program is curated by Abhidh Academy to drive measurable outcomes for learners.'}
                                             </p>
                                         </div>
 
@@ -130,9 +131,9 @@ const Programs = ({ programs }: ProgramsProps) => {
                                                     <strong className="font-medium text-foreground">
                                                         {program.updated_at
                                                             ? new Date(program.updated_at).toLocaleDateString(undefined, {
-                                                                  year: 'numeric',
-                                                                  month: 'short',
-                                                              })
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                            })
                                                             : 'recently'}
                                                     </strong>
                                                 </span>

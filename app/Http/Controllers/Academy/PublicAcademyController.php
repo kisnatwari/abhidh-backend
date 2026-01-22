@@ -25,33 +25,33 @@ class PublicAcademyController extends Controller
             ->latest()
             ->take(6)
             ->get()
-            ->map(fn (Program $program) => $this->programResource($program));
+            ->map(fn(Program $program) => $this->programResource($program));
 
         $featuredCourses = Course::with('program')
             ->where('featured', true)
             ->latest()
             ->take(6)
             ->get()
-            ->map(fn (Course $course) => $this->courseResource($course));
+            ->map(fn(Course $course) => $this->courseResource($course));
 
         if ($featuredCourses->isEmpty()) {
             $featuredCourses = Course::with('program')
                 ->latest()
                 ->take(6)
                 ->get()
-                ->map(fn (Course $course) => $this->courseResource($course));
+                ->map(fn(Course $course) => $this->courseResource($course));
         }
 
         $blogPosts = Blog::where('is_published', true)
             ->latest('published_at')
             ->take(3)
             ->get()
-            ->map(fn (Blog $blog) => $this->blogResource($blog));
+            ->map(fn(Blog $blog) => $this->blogResource($blog));
 
         $trainers = Trainer::latest()
             ->take(6)
             ->get()
-            ->map(fn (Trainer $trainer) => $this->trainerResource($trainer));
+            ->map(fn(Trainer $trainer) => $this->trainerResource($trainer));
 
         return Inertia::render('academy/home', [
             'programs' => $programs,
@@ -66,7 +66,7 @@ class PublicAcademyController extends Controller
         $programs = Program::withCount('courses')
             ->orderBy('name')
             ->get()
-            ->map(fn (Program $program) => $this->programResource($program));
+            ->map(fn(Program $program) => $this->programResource($program));
 
         return Inertia::render('academy/programs/index', [
             'programs' => $programs,
@@ -79,7 +79,7 @@ class PublicAcademyController extends Controller
             ->where('course_type', 'self_paced')
             ->latest()
             ->get()
-            ->map(fn (Course $course) => $this->courseResource($course));
+            ->map(fn(Course $course) => $this->courseResource($course));
 
         return Inertia::render('academy/self-paced/index', [
             'courses' => $courses,
@@ -93,17 +93,19 @@ class PublicAcademyController extends Controller
         // If program_id is provided, filter by that specific program
         if ($programId) {
             $programQuery = Program::withCount('courses')
-                ->with(['courses' => function ($query) {
-                    $query->with('program')
-                        ->orderBy('title');
-                }])
+                ->with([
+                    'courses' => function ($query) {
+                        $query->with('program')
+                            ->orderBy('title');
+                    }
+                ])
                 ->where('id', $programId)
                 ->orderBy('name');
 
             $programGroups = $programQuery->get()
                 ->map(function (Program $program) {
                     $courses = $program->courses
-                        ->map(fn (Course $course) => $this->courseResource($course))
+                        ->map(fn(Course $course) => $this->courseResource($course))
                         ->filter()
                         ->values();
 
@@ -123,15 +125,17 @@ class PublicAcademyController extends Controller
         } else {
             // Default behavior: show all programs with their courses
             $programGroups = Program::withCount('courses')
-                ->with(['courses' => function ($query) {
-                    $query->with('program')
-                        ->orderBy('title');
-                }])
+                ->with([
+                    'courses' => function ($query) {
+                        $query->with('program')
+                            ->orderBy('title');
+                    }
+                ])
                 ->orderBy('name')
                 ->get()
                 ->map(function (Program $program) {
                     $courses = $program->courses
-                        ->map(fn (Course $course) => $this->courseResource($course))
+                        ->map(fn(Course $course) => $this->courseResource($course))
                         ->filter()
                         ->values();
 
@@ -151,7 +155,7 @@ class PublicAcademyController extends Controller
                 ->whereNull('program_id')
                 ->latest()
                 ->get()
-                ->map(fn (Course $course) => $this->courseResource($course));
+                ->map(fn(Course $course) => $this->courseResource($course));
         }
 
         return Inertia::render('academy/courses/index', [
@@ -173,7 +177,7 @@ class PublicAcademyController extends Controller
         $galleries = Gallery::with('photos')
             ->latest()
             ->get()
-            ->map(fn (Gallery $gallery) => $this->galleryResource($gallery));
+            ->map(fn(Gallery $gallery) => $this->galleryResource($gallery));
 
         return Inertia::render('academy/galleries/index', [
             'galleries' => $galleries,
@@ -189,7 +193,7 @@ class PublicAcademyController extends Controller
             ->latest()
             ->take(6)
             ->get()
-            ->map(fn (Gallery $item) => $this->galleryResource($item));
+            ->map(fn(Gallery $item) => $this->galleryResource($item));
 
         return Inertia::render('academy/galleries/show', [
             'gallery' => $this->galleryResource($gallery),
@@ -202,7 +206,7 @@ class PublicAcademyController extends Controller
         $posts = Blog::where('is_published', true)
             ->latest('published_at')
             ->paginate(9)
-            ->through(fn (Blog $blog) => $this->blogResource($blog));
+            ->through(fn(Blog $blog) => $this->blogResource($blog));
 
         return Inertia::render('academy/blog/index', [
             'posts' => $posts,
@@ -222,7 +226,7 @@ class PublicAcademyController extends Controller
     {
         $programs = Program::orderBy('name')
             ->get(['id', 'name'])
-            ->map(fn (Program $program) => [
+            ->map(fn(Program $program) => [
                 'id' => $program->id,
                 'name' => $program->name,
             ]);
@@ -258,7 +262,7 @@ class PublicAcademyController extends Controller
                 new ContactNotificationMail($contact)
             );
         } catch (\Throwable $th) {
-            Log::error('Failed to send public contact notification: '.$th->getMessage());
+            Log::error('Failed to send public contact notification: ' . $th->getMessage());
         }
 
         return redirect()
@@ -277,14 +281,14 @@ class PublicAcademyController extends Controller
             ->latest()
             ->take(3)
             ->get()
-            ->map(fn (Program $program) => $this->programResource($program));
+            ->map(fn(Program $program) => $this->programResource($program));
 
         $popularCourses = Course::with('program')
             ->where('course_type', 'self_paced')
             ->latest()
             ->take(4)
             ->get()
-            ->map(fn (Course $course) => $this->courseResource($course));
+            ->map(fn(Course $course) => $this->courseResource($course));
 
         return Inertia::render('academy/dashboard', [
             'stats' => [
@@ -353,9 +357,9 @@ class PublicAcademyController extends Controller
                                         return 0;
                                     });
                             }
-                            
+
                             // Fallback to old duration format if no subtopics
-                            $duration = $totalHours > 0 
+                            $duration = $totalHours > 0
                                 ? ($totalHours == (int) $totalHours ? (int) $totalHours : number_format($totalHours, 1)) . ' hrs'
                                 : ($topic['duration'] ?? null);
 
@@ -388,9 +392,9 @@ class PublicAcademyController extends Controller
             : null;
 
         // Only include content if user is enrolled and payment is verified
-        $includeContent = $enrollment 
+        $includeContent = $enrollment
             && $course->course_type === 'self_paced'
-            && (bool) $enrollment->payment_verified 
+            && (bool) $enrollment->payment_verified
             && (bool) $enrollment->is_paid;
 
         $topics = [];
@@ -410,46 +414,46 @@ class PublicAcademyController extends Controller
 
                     if (is_array($topic)) {
                         $title = $topic['topic'] ?? $topic['title'] ?? null;
-                        
+
                         // Handle new structure: subtopics are objects with name, content, hours
                         // Also handle old structure for backward compatibility
                         $subtopics = collect($topic['subtopics'] ?? [])
                             ->map(function ($subtopic, int $subIndex) use ($includeContent) {
-                                // New format: subtopic is an object with name, content, hours
-                                if (is_array($subtopic) && isset($subtopic['name'])) {
-                                    return [
-                                        'id' => $subIndex + 1,
-                                        'order' => $subIndex,
-                                        'name' => $subtopic['name'] ?? '',
-                                        'content' => $includeContent ? ($subtopic['content'] ?? '') : '',
-                                        'hours' => (float) ($subtopic['hours'] ?? 0),
-                                        'duration' => ($subtopic['hours'] ?? 0) > 0 
-                                            ? (($subtopic['hours'] == (int) $subtopic['hours']) 
-                                                ? (int) $subtopic['hours'] 
-                                                : number_format((float) $subtopic['hours'], 1)) . ' hrs'
-                                            : null,
-                                    ];
-                                }
-                                // Old format: subtopic is a string
-                                if (is_string($subtopic) && trim($subtopic) !== '') {
-                                    return [
-                                        'id' => $subIndex + 1,
-                                        'order' => $subIndex,
-                                        'name' => $subtopic,
-                                        'content' => '',
-                                        'hours' => 0,
-                                        'duration' => null,
-                                    ];
-                                }
-                                return null;
-                            })
+                            // New format: subtopic is an object with name, content, hours
+                            if (is_array($subtopic) && isset($subtopic['name'])) {
+                                return [
+                                    'id' => $subIndex + 1,
+                                    'order' => $subIndex,
+                                    'name' => $subtopic['name'] ?? '',
+                                    'content' => $includeContent ? ($subtopic['content'] ?? '') : '',
+                                    'hours' => (float) ($subtopic['hours'] ?? 0),
+                                    'duration' => ($subtopic['hours'] ?? 0) > 0
+                                        ? (($subtopic['hours'] == (int) $subtopic['hours'])
+                                            ? (int) $subtopic['hours']
+                                            : number_format((float) $subtopic['hours'], 1)) . ' hrs'
+                                        : null,
+                                ];
+                            }
+                            // Old format: subtopic is a string
+                            if (is_string($subtopic) && trim($subtopic) !== '') {
+                                return [
+                                    'id' => $subIndex + 1,
+                                    'order' => $subIndex,
+                                    'name' => $subtopic,
+                                    'content' => '',
+                                    'hours' => 0,
+                                    'duration' => null,
+                                ];
+                            }
+                            return null;
+                        })
                             ->filter()
                             ->values()
                             ->all();
 
                         // Calculate total hours from subtopics
                         $totalHours = collect($subtopics)->sum('hours');
-                        $duration = $totalHours > 0 
+                        $duration = $totalHours > 0
                             ? ($totalHours == (int) $totalHours ? (int) $totalHours : number_format($totalHours, 1)) . ' hrs'
                             : ($topic['duration'] ?? null);
 
@@ -558,7 +562,7 @@ class PublicAcademyController extends Controller
             'media_type' => $gallery->media_type,
             'youtube_url' => $gallery->youtube_url,
             'created_at' => optional($gallery->created_at)->toDateTimeString(),
-            'photos' => $gallery->photos->map(fn ($photo) => [
+            'photos' => $gallery->photos->map(fn($photo) => [
                 'id' => $photo->id,
                 'photo_path' => $photo->photo_path,
                 'photo_url' => $photo->photo_url,

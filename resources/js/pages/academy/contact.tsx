@@ -192,15 +192,15 @@ const Contact = ({ programOptions }: ContactProps) => {
                                     <h3 className="text-lg font-semibold">We&apos;d love to meet you</h3>
                                     <p>
                                         Visit us at <strong>Nardevi, Kathmandu, Nepal</strong> or call us at{' '}
-                                        <a href="tel:+9779841080407" className="font-semibold text-primary">
-                                            +977-9841080407
+                                        <a href="tel:+9779801110981" className="font-semibold text-primary">
+                                            +977-9801110981
                                         </a>
                                         .
                                     </p>
                                     <p>
                                         You can also email us directly at{' '}
                                         <a href="mailto:academy@abhidh.com" className="font-semibold text-primary">
-                                        academy@abhidh.com
+                                            academy@abhidh.com
                                         </a>
                                         .
                                     </p>

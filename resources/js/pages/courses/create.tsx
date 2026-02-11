@@ -53,6 +53,7 @@ export default function CreateCourse() {
         // Guided course fields
         description: '',
         duration: '',
+        grade: '',
         target_audience: '',
         key_learning_objectives: [''] as string[],
         syllabus: [{ session: 1, course_topic: '', learnings: [''], outcomes: [''], hours: 0 }] as SyllabusRow[],
@@ -164,13 +165,13 @@ export default function CreateCourse() {
     const removeTopic = (index: number) => {
         if (data.topics.length === 1) return;
         setData('topics', data.topics.filter((_, i) => i !== index));
-        
+
         // Remove expanded state for this topic's subtopics
         const newExpandedSubtopics = new Set(expandedSubtopics);
         data.topics[index].subtopics.forEach((_, subtopicIndex) => {
             newExpandedSubtopics.delete(`${index}-${subtopicIndex}`);
         });
-        
+
         // Reindex remaining expanded subtopics
         const reindexedSubtopics = new Set<string>();
         newExpandedSubtopics.forEach(key => {
@@ -182,7 +183,7 @@ export default function CreateCourse() {
             }
         });
         setExpandedSubtopics(reindexedSubtopics);
-        
+
         // Reindex expanded topics
         const reindexed = new Set<number>();
         expandedTopics.forEach(topicIndex => {
@@ -198,7 +199,7 @@ export default function CreateCourse() {
     const toggleTopic = (index: number) => {
         const newExpanded = new Set(expandedTopics);
         const isCurrentlyExpanded = newExpanded.has(index);
-        
+
         if (isCurrentlyExpanded) {
             newExpanded.delete(index);
             // Collapse all subtopics when topic is collapsed
@@ -280,7 +281,7 @@ export default function CreateCourse() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Prepare data with proper types and filtered empty values
         const submitData: any = {
             course_type: data.course_type,
@@ -300,6 +301,7 @@ export default function CreateCourse() {
         if (data.course_type === 'guided') {
             submitData.description = data.description;
             submitData.duration = data.duration || null;
+            submitData.grade = data.grade || null;
             submitData.target_audience = data.target_audience;
             submitData.key_learning_objectives = data.key_learning_objectives.filter(obj => obj.trim() !== '');
             submitData.syllabus = data.syllabus.map(row => ({
@@ -364,18 +366,16 @@ export default function CreateCourse() {
                             <button
                                 type="button"
                                 onClick={() => setData('course_type', 'guided')}
-                                className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${
-                                    data.course_type === 'guided'
+                                className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${data.course_type === 'guided'
                                         ? 'border-primary bg-primary/5 shadow-sm'
                                         : 'border-border bg-card hover:border-primary/50'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-start gap-4">
-                                    <div className={`rounded-full p-3 ${
-                                        data.course_type === 'guided'
+                                    <div className={`rounded-full p-3 ${data.course_type === 'guided'
                                             ? 'bg-primary/10 text-primary'
                                             : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                        }`}>
                                         <GraduationCap className="h-6 w-6" />
                                     </div>
                                     <div className="flex-1">
@@ -397,18 +397,16 @@ export default function CreateCourse() {
                             <button
                                 type="button"
                                 onClick={() => setData('course_type', 'self_paced')}
-                                className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${
-                                    data.course_type === 'self_paced'
+                                className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${data.course_type === 'self_paced'
                                         ? 'border-primary bg-primary/5 shadow-sm'
                                         : 'border-border bg-card hover:border-primary/50'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-start gap-4">
-                                    <div className={`rounded-full p-3 ${
-                                        data.course_type === 'self_paced'
+                                    <div className={`rounded-full p-3 ${data.course_type === 'self_paced'
                                             ? 'bg-primary/10 text-primary'
                                             : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                        }`}>
                                         <BookOpen className="h-6 w-6" />
                                     </div>
                                     <div className="flex-1">
@@ -517,6 +515,18 @@ export default function CreateCourse() {
                                         placeholder="e.g., 19 Hours, 2 weeks"
                                     />
                                     <InputError message={errors.duration} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="grade">Grade (Optional)</Label>
+                                    <Input
+                                        id="grade"
+                                        name="grade"
+                                        value={data.grade}
+                                        onChange={(e) => setData('grade', e.target.value)}
+                                        placeholder="e.g., Grade A, Senior, etc."
+                                    />
+                                    <InputError message={errors.grade} />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -889,7 +899,7 @@ export default function CreateCourse() {
                                                             {topicRow.subtopics.map((subtopic, subtopicIndex) => {
                                                                 const subtopicKey = `${topicIndex}-${subtopicIndex}`;
                                                                 const isExpanded = expandedSubtopics.has(subtopicKey);
-                                                                
+
                                                                 return (
                                                                     <div
                                                                         key={subtopicIndex}

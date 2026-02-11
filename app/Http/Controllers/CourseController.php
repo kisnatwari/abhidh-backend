@@ -72,6 +72,7 @@ class CourseController extends Controller
                 'title' => ['required', 'string', 'max:255'],
                 'description' => ['required', 'string'],
                 'duration' => ['nullable', 'string', 'max:50'],
+                'grade' => ['nullable', 'string', 'max:50'],
                 'price' => ['nullable', 'numeric', 'min:0'],
                 'target_audience' => ['required', 'string'],
                 'key_learning_objectives' => ['nullable', 'array'],
@@ -102,6 +103,9 @@ class CourseController extends Controller
                 'program_id' => ['nullable', 'exists:programs,id'],
                 'featured' => ['nullable', 'boolean'],
             ]);
+
+            // Clear guided specific fields
+            $validated['grade'] = null;
         }
 
         $validated['featured'] = (bool) ($validated['featured'] ?? false);
@@ -171,6 +175,7 @@ class CourseController extends Controller
                 'title' => ['required', 'string', 'max:255'],
                 'description' => ['required', 'string'],
                 'duration' => ['nullable', 'string', 'max:50'],
+                'grade' => ['nullable', 'string', 'max:50'],
                 'price' => ['nullable', 'numeric', 'min:0'],
                 'target_audience' => ['required', 'string'],
                 'key_learning_objectives' => ['nullable', 'array'],
@@ -207,6 +212,7 @@ class CourseController extends Controller
 
             // Clear guided specific fields
             $validated['duration'] = null;
+            $validated['grade'] = null;
             $validated['target_audience'] = null;
             $validated['key_learning_objectives'] = null;
             $validated['syllabus'] = null;

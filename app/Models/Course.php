@@ -16,6 +16,7 @@ class Course extends Model
         'title',
         'description',
         'duration',
+        'grade',
         'price',
         'target_audience',
         'key_learning_objectives',
@@ -45,7 +46,7 @@ class Course extends Model
 
     public function getCourseTypeLabelAttribute(): string
     {
-        return match($this->course_type) {
+        return match ($this->course_type) {
             'guided' => 'Guided Course',
             'self_paced' => 'Self-Paced Course',
             default => ucfirst($this->course_type),

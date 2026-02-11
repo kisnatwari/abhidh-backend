@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
-import { ArrowLeft, BookOpen, BookOpenCheck, CheckCircle, Clock, LayoutList, Play, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpen, BookOpenCheck, CheckCircle, Clock, LayoutList, Play, Sparkles, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TopicProgressItem = {
@@ -77,6 +77,7 @@ type EnrollmentCourse = {
     title: string | null;
     description: string | null;
     duration: string | null;
+    grade: string | null;
     courseType: string | null;
     courseTypeLabel: string | null;
     keyLearningObjectives: string[];
@@ -167,12 +168,12 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
             .map((topic, index) => {
                 const order = typeof topic.order === 'number' ? topic.order : index;
                 const progress = progressLookup[order];
-                
+
                 // Find progress item for this topic (contains subtopics progress)
                 const topicProgressItem = progressItems.find((item: any) => item.order === order);
 
                 // Parse subtopics - handle both old format (strings) and new format (objects)
-                const parsedSubtopics = Array.isArray(topic.subtopics) 
+                const parsedSubtopics = Array.isArray(topic.subtopics)
                     ? topic.subtopics.filter(Boolean).map((st) => {
                         if (typeof st === 'string') return st;
                         if (typeof st === 'object' && st !== null && 'name' in st) {
@@ -278,11 +279,11 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
     const currentTopic = topics[activeTopicIndex] ?? null;
     const currentSubtopic = currentTopic?.subtopics?.[activeSubtopicIndex] ?? null;
     const currentSubtopicProgress = currentTopic?.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === activeSubtopicIndex);
-    
+
     // Get current subtopic as object
-    const currentSubtopicObj = currentSubtopic && typeof currentSubtopic === 'object' 
-        ? currentSubtopic 
-        : currentSubtopic 
+    const currentSubtopicObj = currentSubtopic && typeof currentSubtopic === 'object'
+        ? currentSubtopic
+        : currentSubtopic
             ? { name: currentSubtopic, content: '', hours: 0 }
             : null;
 
@@ -290,7 +291,7 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
     const subtopicCount = progressSummary?.subtopicCount ?? topics.reduce((sum, t) => sum + (t.subtopics?.length || 0), 0);
     const percentComplete = progressSummary?.percentComplete ?? 0;
     const isCourseComplete = subtopicCount > 0 && (progressSummary?.completedCount ?? 0) >= subtopicCount;
-    
+
     const activeStatus: TopicProgressItem['status'] = (currentSubtopicProgress?.status ?? 'not_started') as TopicProgressItem['status'];
     const ActiveStatusIcon = topicStatusIcon[activeStatus];
     const activeStatusStyle = topicStatusStyles[activeStatus];
@@ -411,12 +412,12 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
         const targetIndex =
             typeof nextOrder === 'number'
                 ? Math.max(
-                      Math.min(
-                          topics.findIndex((topic) => topic.order === nextOrder),
-                          topics.length - 1,
-                      ),
-                      0,
-                  )
+                    Math.min(
+                        topics.findIndex((topic) => topic.order === nextOrder),
+                        topics.length - 1,
+                    ),
+                    0,
+                )
                 : Math.max(topics.length - 1, 0);
 
         handleTopicSelect(targetIndex);
@@ -464,13 +465,19 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                     {enrollment.course?.program?.name ? (
                                         <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
                                             <Sparkles className="h-3 w-3 text-primary" />
-                                            {enrollment.course.program.name}
+                                            {enrollment.course?.program?.name}
                                         </span>
                                     ) : null}
                                     {enrollment.course?.duration ? (
                                         <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium">
                                             <Clock className="h-3 w-3 text-primary" />
-                                            {enrollment.course.duration}
+                                            {enrollment.course?.duration}
+                                        </span>
+                                    ) : null}
+                                    {enrollment.course?.grade ? (
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-primary">
+                                            <GraduationCap className="h-3.5 w-3.5" />
+                                            Grade: {enrollment.course?.grade}
                                         </span>
                                     ) : null}
                                     <span className="text-slate-400">·</span>
@@ -560,7 +567,7 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                         topics.map((topic, topicIndex) => {
                                             const isTopicActive = topicIndex === activeTopicIndex;
                                             const subtopics = topic.subtopics || [];
-                                            
+
                                             return (
                                                 <div key={topic.id} className="space-y-1">
                                                     <button
@@ -587,7 +594,7 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                                             />
                                                         </div>
                                                     </button>
-                                                    
+
                                                     {isTopicActive && subtopics.length > 0 && (
                                                         <div className="ml-2 space-y-1 border-l-2 border-primary/20 pl-3">
                                                             {subtopics.map((subtopic, subtopicIndex) => {
@@ -596,7 +603,7 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                                                 const isSubtopicActive = topicIndex === activeTopicIndex && subtopicIndex === activeSubtopicIndex;
                                                                 const subtopicProgress = topic.subtopicsProgress?.find((sp: SubtopicProgress) => sp.index === subtopicIndex);
                                                                 const subtopicStatus = subtopicProgress?.status ?? 'not_started';
-                                                                
+
                                                                 return (
                                                                     <button
                                                                         key={subtopicIndex}
@@ -714,20 +721,20 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                                                             {lastUpdatedLabel ? <span className="text-[11px]">{lastUpdatedLabel}</span> : null}
                                                         </div>
                                                         <div className="flex flex-wrap gap-2">
-                                                             <Button
-                                                                 type="button"
-                                                                 variant="outline"
-                                                                 className="flex items-center gap-2"
-                                                                 onClick={() => postToSubtopicProgress('start', activeTopicIndex, activeSubtopicIndex, { preserveActive: true })}
-                                                                 disabled={
-                                                                     !currentSubtopicObj ||
-                                                                     currentSubtopicProgress?.status === 'in_progress' ||
-                                                                     pendingAction !== null
-                                                                 }
-                                                             >
-                                                                 <Play className="h-4 w-4" />
-                                                                 Mark in progress
-                                                             </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                className="flex items-center gap-2"
+                                                                onClick={() => postToSubtopicProgress('start', activeTopicIndex, activeSubtopicIndex, { preserveActive: true })}
+                                                                disabled={
+                                                                    !currentSubtopicObj ||
+                                                                    currentSubtopicProgress?.status === 'in_progress' ||
+                                                                    pendingAction !== null
+                                                                }
+                                                            >
+                                                                <Play className="h-4 w-4" />
+                                                                Mark in progress
+                                                            </Button>
                                                             <Button
                                                                 type="button"
                                                                 className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
@@ -871,7 +878,7 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                     </div>
                 )}
             </div>
-        </StudentDashboardLayout>
+        </StudentDashboardLayout >
     );
 }
 

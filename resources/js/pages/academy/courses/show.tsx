@@ -70,6 +70,7 @@ type CourseDetailProps = {
         title: string;
         description: string | null;
         duration: string | null;
+        grade: string | null;
         price: number | null;
         course_type: 'guided' | 'self_paced' | string;
         course_type_label: string;
@@ -169,54 +170,54 @@ const CourseShow = ({ course }: CourseDetailProps) => {
         () =>
             Array.isArray(course.topics)
                 ? course.topics
-                      .map((topic, index) => {
-                          // Handle new structure with title/order or old structure with label
-                          const topicTitle = topic?.title ?? topic?.label ?? null;
-                          const topicId = topic?.id ? `${course.id}-topic-${topic.id}` : `${course.id}-topic-${index}`;
-                          
-                          // Process subtopics - handle both new format (objects) and old format (strings)
-                          const subtopics = (topic?.subtopics ?? []).map((subtopic: any, subIndex: number) => {
-                              if (typeof subtopic === 'object' && subtopic !== null) {
-                                  // New format: object with name, content, hours
-                                  return {
-                                      name: subtopic.name || `Subtopic ${subIndex + 1}`,
-                                      content: subtopic.content || '',
-                                      hours: subtopic.hours || 0,
-                                      duration: subtopic.hours 
-                                          ? (subtopic.hours === Math.floor(subtopic.hours)
-                                              ? `${subtopic.hours} hrs`
-                                              : `${subtopic.hours.toFixed(1)} hrs`)
-                                          : null,
-                                  };
-                              } else if (typeof subtopic === 'string') {
-                                  // Old format: just a string
-                                  return {
-                                      name: subtopic,
-                                      content: '',
-                                      hours: 0,
-                                      duration: null,
-                                  };
-                              }
-                              return null;
-                          }).filter(Boolean);
-                          
-                          // Calculate total hours from subtopics
-                          const totalHours = subtopics.reduce((sum: number, sub: any) => sum + (sub.hours || 0), 0);
-                          const duration = totalHours > 0
-                              ? (totalHours === Math.floor(totalHours)
-                                  ? `${totalHours} hrs`
-                                  : `${totalHours.toFixed(1)} hrs`)
-                              : (topic?.duration ?? null);
-                          
-                          return {
-                              id: topicId,
-                              label: topicTitle,
-                              title: topicTitle,
-                              subtopics: subtopics,
-                              duration: duration,
-                          };
-                      })
-                      .filter((topic) => Boolean(topic.label || topic.subtopics.length || topic.duration))
+                    .map((topic, index) => {
+                        // Handle new structure with title/order or old structure with label
+                        const topicTitle = topic?.title ?? topic?.label ?? null;
+                        const topicId = topic?.id ? `${course.id}-topic-${topic.id}` : `${course.id}-topic-${index}`;
+
+                        // Process subtopics - handle both new format (objects) and old format (strings)
+                        const subtopics = (topic?.subtopics ?? []).map((subtopic: any, subIndex: number) => {
+                            if (typeof subtopic === 'object' && subtopic !== null) {
+                                // New format: object with name, content, hours
+                                return {
+                                    name: subtopic.name || `Subtopic ${subIndex + 1}`,
+                                    content: subtopic.content || '',
+                                    hours: subtopic.hours || 0,
+                                    duration: subtopic.hours
+                                        ? (subtopic.hours === Math.floor(subtopic.hours)
+                                            ? `${subtopic.hours} hrs`
+                                            : `${subtopic.hours.toFixed(1)} hrs`)
+                                        : null,
+                                };
+                            } else if (typeof subtopic === 'string') {
+                                // Old format: just a string
+                                return {
+                                    name: subtopic,
+                                    content: '',
+                                    hours: 0,
+                                    duration: null,
+                                };
+                            }
+                            return null;
+                        }).filter(Boolean);
+
+                        // Calculate total hours from subtopics
+                        const totalHours = subtopics.reduce((sum: number, sub: any) => sum + (sub.hours || 0), 0);
+                        const duration = totalHours > 0
+                            ? (totalHours === Math.floor(totalHours)
+                                ? `${totalHours} hrs`
+                                : `${totalHours.toFixed(1)} hrs`)
+                            : (topic?.duration ?? null);
+
+                        return {
+                            id: topicId,
+                            label: topicTitle,
+                            title: topicTitle,
+                            subtopics: subtopics,
+                            duration: duration,
+                        };
+                    })
+                    .filter((topic) => Boolean(topic.label || topic.subtopics.length || topic.duration))
                 : [],
         [course.id, course.topics],
     );
@@ -225,13 +226,13 @@ const CourseShow = ({ course }: CourseDetailProps) => {
         () =>
             Array.isArray(course.syllabus)
                 ? course.syllabus.map((row, index) => ({
-                      id: `${course.id}-session-${index}`,
-                      session: row.session ?? index + 1,
-                      course_topic: row.course_topic ?? '',
-                      learnings: Array.isArray(row.learnings) ? row.learnings.filter(Boolean) : [],
-                      outcomes: Array.isArray(row.outcomes) ? row.outcomes.filter(Boolean) : [],
-                      hours: row.hours ?? null,
-                  }))
+                    id: `${course.id}-session-${index}`,
+                    session: row.session ?? index + 1,
+                    course_topic: row.course_topic ?? '',
+                    learnings: Array.isArray(row.learnings) ? row.learnings.filter(Boolean) : [],
+                    outcomes: Array.isArray(row.outcomes) ? row.outcomes.filter(Boolean) : [],
+                    hours: row.hours ?? null,
+                }))
                 : [],
         [course.id, course.syllabus],
     );
@@ -284,6 +285,12 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                         <span>{course.duration}</span>
                                     </div>
                                 ) : null}
+                                {course.grade ? (
+                                    <div className="flex items-center gap-2">
+                                        <GraduationCap className="h-5 w-5 text-primary" />
+                                        <span>Grade: {course.grade}</span>
+                                    </div>
+                                ) : null}
                                 {course.price && isSelfPaced ? (
                                     <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 font-semibold text-primary">
                                         <Banknote className="h-5 w-5" />
@@ -326,7 +333,7 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                     <div className="space-y-4">
                                         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
                                             <p className="mb-3 font-semibold text-foreground">
-                                                Guided courses require manual enrollment
+                                                Get Started with this Guided Course
                                             </p>
                                             <p>
                                                 Our team will provide you with detailed information about schedules, pricing, and enrollment process.
@@ -361,15 +368,15 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                                 {showForm ? (
                                                     <form onSubmit={submit} className="space-y-4" id="enroll-form">
                                                         <input type="hidden" name="course_id" value={course.id} />
-                                                        
+
                                                         {/* Payment QR Code Section - Compact Layout */}
                                                         <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4">
                                                             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                                                                 {/* QR Code - Left Side */}
                                                                 <div className="flex-shrink-0 mx-auto sm:mx-0">
                                                                     <div className="rounded-lg bg-white p-3 shadow-md">
-                                                                        <img 
-                                                                            src="/payment-qr.jpg" 
+                                                                        <img
+                                                                            src="/payment-qr.jpg"
                                                                             alt="Payment QR Code - NIC ASIA MoBank"
                                                                             className="w-[200px] h-auto rounded"
                                                                             onError={(e) => {
@@ -395,7 +402,7 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                                                             Scan to Pay
                                                                         </h3>
                                                                     </div>
-                                                                    
+
                                                                     {course.price ? (
                                                                         <div>
                                                                             <p className="text-sm text-muted-foreground">Amount to pay:</p>
@@ -404,7 +411,7 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                                                             </p>
                                                                         </div>
                                                                     ) : null}
-                                                                    
+
                                                                     <div className="space-y-1.5 text-xs text-muted-foreground">
                                                                         <p className="font-medium text-foreground text-sm mb-1.5">Quick steps:</p>
                                                                         <ol className="list-decimal list-inside space-y-1">
@@ -535,7 +542,7 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                     {formattedTopics.map((topic, index) => {
                                         const moduleNumber = index + 1;
                                         const isExpanded = expandedModules.has(topic.id);
-                                        
+
                                         const toggleModule = () => {
                                             setExpandedModules((prev) => {
                                                 const newSet = new Set(prev);
@@ -584,7 +591,7 @@ const CourseShow = ({ course }: CourseDetailProps) => {
                                                             {topic.subtopics.filter(Boolean).map((subtopic: any, subIndex: number) => {
                                                                 const subtopicName = typeof subtopic === 'object' ? subtopic.name : subtopic;
                                                                 const subtopicDuration = typeof subtopic === 'object' ? subtopic.duration : null;
-                                                                
+
                                                                 return (
                                                                     <li key={`${topic.id}-subtopic-${subIndex}`} className="flex items-center justify-between gap-2">
                                                                         <div className="flex items-start gap-2 flex-1 min-w-0">

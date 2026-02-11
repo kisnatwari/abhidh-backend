@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { hexToRgba } from '@/lib/colors';
 import { cn, stripHtml } from '@/lib/utils';
-import { ArrowUpRight, Clock, Sparkles, Banknote } from 'lucide-react';
+import { ArrowUpRight, Clock, Sparkles, Banknote, GraduationCap } from 'lucide-react';
 
 export type CourseResource = {
     id: number;
     title: string;
     description: string | null;
     duration: string | null;
+    grade: string | null;
     price: number | null;
     course_type: string;
     course_type_label: string;
@@ -120,9 +121,14 @@ export const CourseCard = ({ course, className, showProgramBadge = true }: Cours
                                 <Clock className="h-3.5 w-3.5" />
                                 {course.duration}
                             </span>
-                        ) : (
-                            <span />
-                        )}
+                        ) : null}
+                        {course.grade ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/15 bg-emerald-500/5 px-2.5 py-1 font-medium text-emerald-600">
+                                <GraduationCap className="h-3.5 w-3.5" />
+                                Grade: {course.grade}
+                            </span>
+                        ) : null}
+                        {!course.duration && !course.grade && <span />}
                         <span className="inline-flex items-center gap-1 rounded-full bg-primary/5 px-2.5 py-1 font-medium text-primary/80">
                             {isSelfPaced ? 'Self-paced access' : 'Guided cohort'}
                         </span>

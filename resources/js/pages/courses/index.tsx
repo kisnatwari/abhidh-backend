@@ -30,6 +30,7 @@ type CourseRow = {
   title: string;
   description: string | null;
   duration: string | null;
+  grade: string | null;
   price: number | null;
   target_audience: string | null;
   program_id: number | null;
@@ -183,6 +184,7 @@ export default function CoursesIndex() {
                 <TableHead>Type</TableHead>
                 <TableHead>Program</TableHead>
                 <TableHead>Duration</TableHead>
+                <TableHead>Grade</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Enrollments</TableHead>
                 <TableHead>Created</TableHead>
@@ -214,8 +216,8 @@ export default function CoursesIndex() {
                   </TableCell>
 
                   <TableCell>
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className={cn(
                         'text-white',
                         courseTypeColors[course.course_type]
@@ -235,6 +237,9 @@ export default function CoursesIndex() {
 
                   <TableCell>
                     {course.duration || <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell>
+                    {course.grade || <span className="text-muted-foreground">—</span>}
                   </TableCell>
 
                   <TableCell>
@@ -280,8 +285,8 @@ export default function CoursesIndex() {
                           See enrollments
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DeleteCourseDialog 
-                          course={course} 
+                        <DeleteCourseDialog
+                          course={course}
                           trigger={
                             <DropdownMenuItem
                               onSelect={(e) => {

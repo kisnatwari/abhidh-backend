@@ -46,12 +46,13 @@ export default function EditCourse() {
     const [programId, setProgramId] = useState<string | undefined>(course.program_id ? String(course.program_id) : undefined);
     const [price, setPrice] = useState<number | null>(course.price ? Math.round(course.price) : null);
     const [featured, setFeatured] = useState<boolean>(course.featured || false);
-    
+
     // Guided course state
     const [description, setDescription] = useState(course.description || '');
+    const [grade, setGrade] = useState(course.grade || '');
     const [keyLearningObjectives, setKeyLearningObjectives] = useState<string[]>(
-        course.key_learning_objectives && course.key_learning_objectives.length > 0 
-            ? course.key_learning_objectives 
+        course.key_learning_objectives && course.key_learning_objectives.length > 0
+            ? course.key_learning_objectives
             : ['']
     );
     const [syllabus, setSyllabus] = useState<SyllabusRow[]>(
@@ -66,14 +67,14 @@ export default function EditCourse() {
             : [{ session: 1, course_topic: '', learnings: [''], outcomes: [''], hours: 0 }]
     );
     const [expandedSessions, setExpandedSessions] = useState<Set<number>>(new Set([0]));
-    
+
     // Self-paced course state
     // Helper function to normalize old format to new format
     const normalizeTopics = (topicsData: any[]): TopicRow[] => {
         if (!topicsData || topicsData.length === 0) {
             return [{ topic: '', subtopics: [{ name: '', content: '', hours: 0 }] }];
         }
-        
+
         return topicsData.map((row: any) => {
             // Handle old format (subtopics as strings, content/duration at topic level)
             if (row.subtopics && Array.isArray(row.subtopics) && row.subtopics.length > 0) {
@@ -107,7 +108,7 @@ export default function EditCourse() {
             };
         });
     };
-    
+
     const [topics, setTopics] = useState<TopicRow[]>(normalizeTopics(course.topics));
     const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set([0]));
     const [expandedSubtopics, setExpandedSubtopics] = useState<Set<string>>(() => {
@@ -127,12 +128,12 @@ export default function EditCourse() {
 
     // Guided course helpers (same as create.tsx)
     const addSyllabusRow = () => {
-        const newSyllabus = [...syllabus, { 
-            session: syllabus.length + 1, 
-            course_topic: '', 
-            learnings: [''], 
-            outcomes: [''], 
-            hours: 0 
+        const newSyllabus = [...syllabus, {
+            session: syllabus.length + 1,
+            course_topic: '',
+            learnings: [''],
+            outcomes: [''],
+            hours: 0
         }];
         setSyllabus(newSyllabus);
         setExpandedSessions(new Set([...expandedSessions, newSyllabus.length - 1]));
@@ -224,13 +225,13 @@ export default function EditCourse() {
     const removeTopic = (index: number) => {
         if (topics.length === 1) return;
         setTopics(topics.filter((_, i) => i !== index));
-        
+
         // Remove expanded state for this topic's subtopics
         const newExpandedSubtopics = new Set(expandedSubtopics);
         topics[index].subtopics.forEach((_, subtopicIndex) => {
             newExpandedSubtopics.delete(`${index}-${subtopicIndex}`);
         });
-        
+
         // Reindex remaining expanded subtopics
         const reindexedSubtopics = new Set<string>();
         newExpandedSubtopics.forEach(key => {
@@ -242,7 +243,7 @@ export default function EditCourse() {
             }
         });
         setExpandedSubtopics(reindexedSubtopics);
-        
+
         // Reindex expanded topics
         const newExpanded = new Set<number>();
         expandedTopics.forEach(topicIndex => {
@@ -258,7 +259,7 @@ export default function EditCourse() {
     const toggleTopic = (index: number) => {
         const newExpanded = new Set(expandedTopics);
         const isCurrentlyExpanded = newExpanded.has(index);
-        
+
         if (isCurrentlyExpanded) {
             newExpanded.delete(index);
             // Collapse all subtopics when topic is collapsed
@@ -381,18 +382,16 @@ export default function EditCourse() {
                                         <button
                                             type="button"
                                             onClick={() => setCourseType('guided')}
-                                            className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${
-                                                courseType === 'guided'
+                                            className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${courseType === 'guided'
                                                     ? 'border-primary bg-primary/5 shadow-sm'
                                                     : 'border-border bg-card hover:border-primary/50'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-start gap-4">
-                                                <div className={`rounded-full p-3 ${
-                                                    courseType === 'guided'
+                                                <div className={`rounded-full p-3 ${courseType === 'guided'
                                                         ? 'bg-primary/10 text-primary'
                                                         : 'bg-muted text-muted-foreground'
-                                                }`}>
+                                                    }`}>
                                                     <GraduationCap className="h-6 w-6" />
                                                 </div>
                                                 <div className="flex-1">
@@ -414,18 +413,16 @@ export default function EditCourse() {
                                         <button
                                             type="button"
                                             onClick={() => setCourseType('self_paced')}
-                                            className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${
-                                                courseType === 'self_paced'
+                                            className={`relative rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${courseType === 'self_paced'
                                                     ? 'border-primary bg-primary/5 shadow-sm'
                                                     : 'border-border bg-card hover:border-primary/50'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-start gap-4">
-                                                <div className={`rounded-full p-3 ${
-                                                    courseType === 'self_paced'
+                                                <div className={`rounded-full p-3 ${courseType === 'self_paced'
                                                         ? 'bg-primary/10 text-primary'
                                                         : 'bg-muted text-muted-foreground'
-                                                }`}>
+                                                    }`}>
                                                     <BookOpen className="h-6 w-6" />
                                                 </div>
                                                 <div className="flex-1">
@@ -467,8 +464,8 @@ export default function EditCourse() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
                                     <div className="grid gap-2">
                                         <Label htmlFor="program_id">Program (Optional)</Label>
-                                        <Select 
-                                            value={programId} 
+                                        <Select
+                                            value={programId}
                                             onValueChange={(value) => setProgramId(value === 'none' ? undefined : value)}
                                             defaultValue={course.program_id ? String(course.program_id) : undefined}
                                         >
@@ -497,15 +494,15 @@ export default function EditCourse() {
                                     </div>
 
                                     <div className="flex items-center gap-2 pt-8">
-                                        <Switch 
-                                            id="featured" 
+                                        <Switch
+                                            id="featured"
                                             checked={featured}
                                             onCheckedChange={setFeatured}
                                         />
                                         <Label htmlFor="featured">Featured Course</Label>
-                                        <input 
-                                            type="hidden" 
-                                            name="featured" 
+                                        <input
+                                            type="hidden"
+                                            name="featured"
                                             value={featured ? '1' : '0'}
                                         />
                                     </div>
@@ -541,6 +538,18 @@ export default function EditCourse() {
                                                     placeholder="e.g., 19 Hours, 2 weeks"
                                                 />
                                                 <InputError message={errors.duration} />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="grade">Grade (Optional)</Label>
+                                                <Input
+                                                    id="grade"
+                                                    name="grade"
+                                                    value={grade}
+                                                    onChange={(e) => setGrade(e.target.value)}
+                                                    placeholder="e.g., Grade A, Senior, etc."
+                                                />
+                                                <InputError message={errors.grade} />
                                             </div>
 
                                             <div className="grid gap-2">
@@ -976,7 +985,7 @@ export default function EditCourse() {
                                                                         {topicRow.subtopics.map((subtopic, subtopicIndex) => {
                                                                             const subtopicKey = `${topicIndex}-${subtopicIndex}`;
                                                                             const isExpanded = expandedSubtopics.has(subtopicKey);
-                                                                            
+
                                                                             return (
                                                                                 <div
                                                                                     key={subtopicIndex}

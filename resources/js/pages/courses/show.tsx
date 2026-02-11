@@ -15,6 +15,7 @@ type Course = {
     title: string;
     description: string | null;
     duration: string | null;
+    grade: string | null;
     price: number | null;
     target_audience: string | null;
     key_learning_objectives: string[] | null;
@@ -105,8 +106,8 @@ export default function ShowCourse() {
                         <div>
                             <h1 className="text-2xl font-bold">{course.title}</h1>
                             <div className="flex items-center gap-2 mt-2">
-                                <Badge 
-                                    variant="secondary" 
+                                <Badge
+                                    variant="secondary"
                                     className={cn('text-white', courseTypeColors[course.course_type])}
                                 >
                                     {courseTypeLabels[course.course_type]}
@@ -146,13 +147,13 @@ export default function ShowCourse() {
                             {course.description && (
                                 <div>
                                     <h3 className="font-semibold mb-2">Description</h3>
-                                    <div 
-                                        className="prose max-w-none text-sm overflow-x-auto break-words"
+                                    <div
+                                        className="prose max-w-none text-sm overflow-x-auto wrap-break-word"
                                         dangerouslySetInnerHTML={{ __html: course.description }}
                                     />
                                 </div>
                             )}
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {course.duration && (
                                     <div>
@@ -160,11 +161,17 @@ export default function ShowCourse() {
                                         <p className="text-sm">{course.duration}</p>
                                     </div>
                                 )}
-
                                 {course.target_audience && (
                                     <div>
                                         <h4 className="font-semibold mb-1 text-sm text-muted-foreground">Target Audience</h4>
                                         <p className="text-sm">{course.target_audience}</p>
+                                    </div>
+                                )}
+
+                                {course.grade && (
+                                    <div>
+                                        <h4 className="font-semibold mb-1 text-sm text-muted-foreground">Grade</h4>
+                                        <p className="text-sm">{course.grade}</p>
                                     </div>
                                 )}
                             </div>
@@ -235,8 +242,8 @@ export default function ShowCourse() {
                             {course.description && (
                                 <div>
                                     <h3 className="font-semibold mb-2">Description</h3>
-                                    <div 
-                                        className="prose max-w-none text-sm overflow-x-auto break-words"
+                                    <div
+                                        className="prose max-w-none text-sm overflow-x-auto wrap-break-word"
                                         dangerouslySetInnerHTML={{ __html: course.description }}
                                     />
                                 </div>
@@ -248,7 +255,7 @@ export default function ShowCourse() {
                                     <p className="text-lg font-bold text-primary">Rs. {Math.round(course.price).toLocaleString('en-US')}</p>
                                 </div>
                             )}
-                            
+
                             {course.topics && course.topics.length > 0 && (
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
@@ -280,14 +287,14 @@ export default function ShowCourse() {
                                         {course.topics.map((topicRow: any, index: number) => {
                                             // Calculate total hours from subtopics
                                             const totalHours = topicRow.subtopics?.reduce((sum: number, subtopic: any) => {
-                                                const hours = typeof subtopic === 'object' && subtopic?.hours 
-                                                    ? parseFloat(String(subtopic.hours)) || 0 
+                                                const hours = typeof subtopic === 'object' && subtopic?.hours
+                                                    ? parseFloat(String(subtopic.hours)) || 0
                                                     : 0;
                                                 return sum + hours;
                                             }, 0) || 0;
-                                            
+
                                             const totalHoursNum = typeof totalHours === 'number' ? totalHours : parseFloat(String(totalHours)) || 0;
-                                            
+
                                             return (
                                                 <div
                                                     key={index}
@@ -297,13 +304,13 @@ export default function ShowCourse() {
                                                         <h4 className="font-semibold text-lg">{topicRow.topic}</h4>
                                                         {totalHoursNum > 0 && (
                                                             <Badge variant="outline">
-                                                                {totalHoursNum === Math.floor(totalHoursNum) 
-                                                                    ? `${totalHoursNum} hrs` 
+                                                                {totalHoursNum === Math.floor(totalHoursNum)
+                                                                    ? `${totalHoursNum} hrs`
                                                                     : `${totalHoursNum.toFixed(1)} hrs`}
                                                             </Badge>
                                                         )}
                                                     </div>
-                                                    
+
                                                     {topicRow.subtopics && topicRow.subtopics.length > 0 && (
                                                         <div className="space-y-3">
                                                             <h5 className="font-medium text-sm text-muted-foreground">Subtopics</h5>
@@ -313,12 +320,12 @@ export default function ShowCourse() {
                                                                     const subtopicName = typeof subtopic === 'object' ? subtopic.name : subtopic;
                                                                     const subtopicContent = typeof subtopic === 'object' ? subtopic.content : null;
                                                                     const subtopicHoursRaw = typeof subtopic === 'object' ? subtopic.hours : 0;
-                                                                    const subtopicHours = typeof subtopicHoursRaw === 'number' 
-                                                                        ? subtopicHoursRaw 
+                                                                    const subtopicHours = typeof subtopicHoursRaw === 'number'
+                                                                        ? subtopicHoursRaw
                                                                         : parseFloat(String(subtopicHoursRaw)) || 0;
                                                                     const contentKey = `${index}-${i}`;
                                                                     const isContentVisible = visibleSubtopicContents.has(contentKey);
-                                                                    
+
                                                                     return (
                                                                         <div key={i} className="space-y-2">
                                                                             <div className="flex items-center justify-between">
@@ -353,8 +360,8 @@ export default function ShowCourse() {
                                                                                 )}
                                                                             </div>
                                                                             {subtopicContent && isContentVisible && (
-                                                                                <div 
-                                                                                    className="prose prose-sm max-w-none text-xs overflow-x-auto break-words text-muted-foreground rounded-md p-4"
+                                                                                <div
+                                                                                    className="prose prose-sm max-w-none text-xs overflow-x-auto wrap-break-word text-muted-foreground rounded-md p-4"
                                                                                     style={{ backgroundColor: 'rgb(250, 250, 250)' }}
                                                                                     dangerouslySetInnerHTML={{ __html: subtopicContent }}
                                                                                 />
@@ -373,7 +380,7 @@ export default function ShowCourse() {
                             )}
                         </>
                     )}
-                    
+
                     <div className="pt-4 border-t text-sm text-muted-foreground">
                         <strong>Created:</strong> {new Date(course.created_at).toLocaleDateString()}
                     </div>

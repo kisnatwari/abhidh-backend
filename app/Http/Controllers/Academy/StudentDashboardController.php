@@ -141,11 +141,11 @@ class StudentDashboardController extends Controller
             ->values();
 
         $availableCourses = Course::with('program')
-            ->when($enrolledCourseIds->isNotEmpty(), fn ($query) => $query->whereNotIn('id', $enrolledCourseIds))
+            ->when($enrolledCourseIds->isNotEmpty(), fn($query) => $query->whereNotIn('id', $enrolledCourseIds))
             ->latest('updated_at')
             ->take(6)
             ->get()
-            ->map(fn (Course $course) => $this->courseCatalogResource($course))
+            ->map(fn(Course $course) => $this->courseCatalogResource($course))
             ->values();
 
         return Inertia::render('academy/dashboard/enrollments/index', [
@@ -210,7 +210,7 @@ class StudentDashboardController extends Controller
         $this->ensureSelfPacedAccess($enrollment, $course);
 
         $topics = $this->progressService->extractTopics($course, includeContent: false);
-        abort_if(! isset($topics[$topic]), 404);
+        abort_if(!isset($topics[$topic]), 404);
 
         $this->progressService->syncTopics($enrollment, $topics);
         $this->progressService->markTopicStarted($enrollment, $topic);
@@ -227,7 +227,7 @@ class StudentDashboardController extends Controller
         $this->ensureSelfPacedAccess($enrollment, $course);
 
         $topics = $this->progressService->extractTopics($course, includeContent: false);
-        abort_if(! isset($topics[$topic]), 404);
+        abort_if(!isset($topics[$topic]), 404);
 
         $this->progressService->syncTopics($enrollment, $topics);
         $this->progressService->markTopicCompleted($enrollment, $topic);
@@ -244,8 +244,8 @@ class StudentDashboardController extends Controller
         $this->ensureSelfPacedAccess($enrollment, $course);
 
         $topics = $this->progressService->extractTopics($course, includeContent: false);
-        abort_if(! isset($topics[$topic]), 404);
-        abort_if(! isset($topics[$topic]['subtopics'][$subtopic]), 404);
+        abort_if(!isset($topics[$topic]), 404);
+        abort_if(!isset($topics[$topic]['subtopics'][$subtopic]), 404);
 
         $this->progressService->syncTopics($enrollment, $topics);
         $this->progressService->markSubtopicStarted($enrollment, $topic, $subtopic);
@@ -262,8 +262,8 @@ class StudentDashboardController extends Controller
         $this->ensureSelfPacedAccess($enrollment, $course);
 
         $topics = $this->progressService->extractTopics($course, includeContent: false);
-        abort_if(! isset($topics[$topic]), 404);
-        abort_if(! isset($topics[$topic]['subtopics'][$subtopic]), 404);
+        abort_if(!isset($topics[$topic]), 404);
+        abort_if(!isset($topics[$topic]['subtopics'][$subtopic]), 404);
 
         $this->progressService->syncTopics($enrollment, $topics);
         $this->progressService->markSubtopicCompleted($enrollment, $topic, $subtopic);
@@ -273,7 +273,7 @@ class StudentDashboardController extends Controller
 
     protected function courseStudyResource(?Course $course, ?Enrollment $enrollment = null): ?array
     {
-        if (! $course) {
+        if (!$course) {
             return null;
         }
 
@@ -281,13 +281,14 @@ class StudentDashboardController extends Controller
 
         $contentLocked = $enrollment
             && $course->course_type === 'self_paced'
-            && (! (bool) $enrollment->payment_verified || ! (bool) $enrollment->is_paid);
+            && (!(bool) $enrollment->payment_verified || !(bool) $enrollment->is_paid);
 
         $base = [
             'id' => $course->id,
             'title' => $course->title,
             'description' => $course->description,
             'duration' => $course->duration,
+            'grade' => $course->grade,
             'courseType' => $course->course_type,
             'courseTypeLabel' => $course->course_type_label,
             'keyLearningObjectives' => $course->key_learning_objectives ?: [],
@@ -302,7 +303,7 @@ class StudentDashboardController extends Controller
         ];
 
         if ($course->course_type === 'self_paced') {
-            $topics = $this->progressService->extractTopics($course, includeContent: ! $contentLocked);
+            $topics = $this->progressService->extractTopics($course, includeContent: !$contentLocked);
             $progressPayload = null;
             $summaryPayload = null;
 
@@ -368,17 +369,17 @@ class StudentDashboardController extends Controller
 
         $syllabus = collect($course->syllabus ?: [])
             ->map(function ($entry, int $index) {
-                if (! is_array($entry)) {
+                if (!is_array($entry)) {
                     return null;
                 }
 
                 $learnings = collect($entry['learnings'] ?? [])
-                    ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+                    ->filter(fn($value) => is_string($value) && trim($value) !== '')
                     ->values()
                     ->all();
 
                 $activities = collect($entry['activities'] ?? [])
-                    ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+                    ->filter(fn($value) => is_string($value) && trim($value) !== '')
                     ->values()
                     ->all();
 
@@ -412,6 +413,7 @@ class StudentDashboardController extends Controller
             'courseType' => $course->course_type,
             'courseTypeLabel' => $course->course_type_label,
             'duration' => $course->duration,
+            'grade' => $course->grade,
             'featured' => (bool) $course->featured,
             'program' => $course->program ? [
                 'id' => $course->program->id,
@@ -425,7 +427,7 @@ class StudentDashboardController extends Controller
     {
         abort_if($course->course_type !== 'self_paced', 404);
 
-        $contentLocked = (! (bool) $enrollment->payment_verified) || (! (bool) $enrollment->is_paid);
+        $contentLocked = (!(bool) $enrollment->payment_verified) || (!(bool) $enrollment->is_paid);
         abort_if($contentLocked, 403);
     }
 }

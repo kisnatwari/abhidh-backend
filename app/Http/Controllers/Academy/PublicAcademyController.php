@@ -9,6 +9,7 @@ use App\Models\ContactUs;
 use App\Models\Course;
 use App\Models\Gallery;
 use App\Models\Enrollment;
+use App\Models\Partner;
 use App\Models\Program;
 use App\Models\Trainer;
 use Illuminate\Http\Request;
@@ -52,12 +53,16 @@ class PublicAcademyController extends Controller
             ->take(6)
             ->get()
             ->map(fn(Trainer $trainer) => $this->trainerResource($trainer));
-
+        $partners = Partner::where('is_active', true)
+            ->orderBy('order')
+            ->get()
+            ->map(fn(Partner $partner) => $this->partnerResource($partner));
         return Inertia::render('academy/home', [
             'programs' => $programs,
             'featuredCourses' => $featuredCourses,
             'blogPosts' => $blogPosts,
             'trainers' => $trainers,
+            'partners' => $partners,
         ]);
     }
 
@@ -570,6 +575,18 @@ class PublicAcademyController extends Controller
                 'photo_url' => $photo->photo_url,
                 'caption' => $photo->caption,
             ])->values()->all(),
+        ];
+    }
+    /**
+     * Transform a partner model for the frontend.
+     */
+    protected function partnerResource(Partner $partner): array
+    {
+        return [
+            'id' => $partner->id,
+            'name' => $partner->name,
+            'logo_url' => $partner->logo_url,
+            'link' => $partner->link,
         ];
     }
 }

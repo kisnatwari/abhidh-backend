@@ -68,7 +68,7 @@ class Enrollment extends Model
     public function getPaymentScreenshotUrlAttribute(): ?string
     {
         return $this->payment_screenshot_path
-            ? \Storage::disk('public')->url($this->payment_screenshot_path)
+            ? '/storage/' . ltrim($this->payment_screenshot_path, '/')
             : null;
     }
 }

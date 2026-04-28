@@ -104,8 +104,11 @@ class DashboardController extends Controller
             });
 
         // Enrollment statistics by month (last 6 months)
+        $driver = DB::getDriverName();
+        $monthFormat = $driver === 'sqlite' ? "strftime('%Y-%m', created_at)" : 'DATE_FORMAT(created_at, "%Y-%m")';
+
         $enrollments_by_month = Enrollment::select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw("$monthFormat as month"),
                 DB::raw('COUNT(*) as count')
             )
             ->where('created_at', '>=', now()->subMonths(6))

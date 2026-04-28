@@ -43,11 +43,19 @@ type TrainerResource = {
     photo_url: string | null;
 };
 
+type PartnerResource = {
+    id: number;
+    name: string;
+    logo_url: string | null;
+    link: string | null;
+};
+
 interface HomeProps {
     programs: ProgramResource[];
     featuredCourses: CourseResource[];
     blogPosts: BlogResource[];
     trainers: TrainerResource[];
+    partners: PartnerResource[];
 }
 
 const stats = [
@@ -57,7 +65,7 @@ const stats = [
     { icon: Target, value: '95%', label: 'Success Rate' },
 ];
 
-const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => {
+const Home = ({ programs, featuredCourses, blogPosts, trainers, partners }: HomeProps) => {
     return (
         <AcademyLayout>
             <Head title="Home" />
@@ -360,6 +368,38 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers }: HomeProps) => 
                     </div>
                 </div>
             </section>
+
+            {partners.length > 0 && (
+                <section className="bg-background py-16 overflow-hidden">
+                    <div className="container mx-auto px-4 mb-10">
+                        <div className="text-center space-y-4">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1 text-sm font-semibold text-primary backdrop-blur-sm">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                                Partnerships that elevate
+                            </div>
+                            <h2 className="text-3xl font-bold md:text-4xl">Our Trusted Partners</h2>
+                        </div>
+                    </div>
+                    
+                    <div className="relative flex overflow-x-hidden">
+                        <div className="flex animate-marquee whitespace-nowrap py-12 items-center">
+                            {partners.concat(partners).map((partner, index) => (
+                                <div key={`${partner.id}-${index}`} className="mx-12 flex-shrink-0">
+                                    {partner.link ? (
+                                        <a href={partner.link} target="_blank" rel="noopener noreferrer" className="grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                                            <img src={partner.logo_url ?? ''} alt={partner.name} className="h-12 w-auto object-contain max-w-[150px]" />
+                                        </a>
+                                    ) : (
+                                        <div className="grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                                            <img src={partner.logo_url ?? ''} alt={partner.name} className="h-12 w-auto object-contain max-w-[150px]" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             <section className="bg-secondary/25 py-20">
                 <div className="container mx-auto space-y-10 px-4">

@@ -13,6 +13,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ContactUsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -88,8 +89,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('contact-us/{contactUs}', [ContactUsController::class, 'show'])->name('contact-us.show');
     Route::post('contact-us/{contactUs}/reply', [ContactUsController::class, 'reply'])->name('contact-us.reply');
     Route::delete('contact-us/{contactUs}', [ContactUsController::class, 'destroy'])->name('contact-us.destroy');
+    Route::resource('partners', PartnerController::class)->except(['update']);
+    Route::post('partners/{partner}', [PartnerController::class, 'update'])->name('partners.update');
 });
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
-

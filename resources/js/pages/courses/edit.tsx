@@ -630,15 +630,6 @@ export default function EditCourse() {
                                         <div className="grid gap-4">
                                             <div className="flex items-center justify-between">
                                                 <Label className="text-lg font-semibold">Syllabus</Label>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={addSyllabusRow}
-                                                >
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    Add Session
-                                                </Button>
                                             </div>
 
                                             <div className="space-y-4">
@@ -880,15 +871,6 @@ export default function EditCourse() {
                                         <div className="grid gap-4">
                                             <div className="flex items-center justify-between">
                                                 <Label className="text-lg font-semibold">Topics</Label>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={addTopic}
-                                                >
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    Add Topic
-                                                </Button>
                                             </div>
 
                                             <div className="space-y-4">
@@ -1104,6 +1086,29 @@ export default function EditCourse() {
 
                                 {/* Form Actions */}
                                 <div className="flex items-center justify-end gap-4 pt-6 border-t">
+                                    {courseType === 'guided' ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={addSyllabusRow}
+                                            className="mr-auto"
+                                        >
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Add Session
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={addTopic}
+                                            className="mr-auto"
+                                        >
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Add Topic
+                                        </Button>
+                                    )}
                                     <Button
                                         type="button"
                                         variant="outline"

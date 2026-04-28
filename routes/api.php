@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\PartnerController;
 use App\Http\Controllers\Api\TrainerController;
 use App\Http\Controllers\Api\GalleryController;
 use App\Http\Controllers\Api\ProgramController;
@@ -27,6 +28,9 @@ Route::get('blogs/{blog}', [BlogController::class, 'show']);
 
 Route::get('trainers', [TrainerController::class, 'index']);
 Route::get('trainers/{trainer}', [TrainerController::class, 'show']);
+
+Route::get('partners', [PartnerController::class, 'index']);
+Route::get('partners/{partner}', [PartnerController::class, 'show']);
 
 Route::get('galleries', [GalleryController::class, 'index']);
 Route::get('galleries/{gallery}', [GalleryController::class, 'show']);
@@ -68,4 +72,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payment routes (protected, users can submit payment screenshots)
     Route::post('payments/submit', [PaymentController::class, 'submitPayment']);
+
+    // Admin-only Partner management via API (could be further restricted by roles if needed)
+    Route::post('partners', [PartnerController::class, 'store']);
+    Route::post('partners/{partner}', [PartnerController::class, 'update']); // Use POST for multipart/form-data updates
+    Route::delete('partners/{partner}', [PartnerController::class, 'destroy']);
 });

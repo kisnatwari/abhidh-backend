@@ -139,24 +139,32 @@ export default function ViewEnrollmentDialog({
                                                 onClick={() => window.open(enrollment.payment_screenshot_url, '_blank')}
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement;
-                                                    target.src = '/placeholder-image.png';
-                                                    target.alt = 'Failed to load image';
+                                                    if (!target.src.includes('ui-avatars.com')) {
+                                                        target.src = `https://ui-avatars.com/api/?name=Screenshot&background=FFB347&color=fff&size=512&bold=true`;
+                                                        target.alt = 'Screenshot missing or inaccessible';
+                                                    }
                                                 }}
                                             />
                                         </div>
                                     </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => window.open(enrollment.payment_screenshot_url, '_blank')}
-                                        className="w-full sm:w-auto"
-                                    >
-                                        Open Full Size in New Tab
-                                    </Button>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => window.open(enrollment.payment_screenshot_url, '_blank')}
+                                            className="flex-1"
+                                        >
+                                            <FileImage className="h-4 w-4 mr-2" />
+                                            Open Full Size
+                                        </Button>
+                                        <p className="text-xs text-muted-foreground flex items-center">
+                                            Path: {enrollment.payment_screenshot_path}
+                                        </p>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="pl-7 text-muted-foreground">
-                                    Screenshot URL not available
+                                    No screenshot submitted
                                 </div>
                             )}
                         </div>

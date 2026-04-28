@@ -23,7 +23,7 @@ interface ProgramsProps {
 }
 
 const Programs = ({ programs }: ProgramsProps) => {
-    const totalCourses = programs.reduce((sum, program) => sum + (program.courses_count ?? 0), 0);
+    const totalCourses = programs.reduce((sum, program) => sum + Number(program.courses_count ?? 0), 0);
     const categoryCount = new Set(programs.map((program) => formatCategoryLabel(program.category))).size;
 
     return (

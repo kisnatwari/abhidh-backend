@@ -129,50 +129,51 @@ const GalleryShow = ({ gallery, relatedGalleries }: GalleryShowProps) => {
                         </div>
                     ) : gallery.photos.length > 0 ? (
                         <div className="space-y-8">
-                            <div className="overflow-hidden rounded-3xl border shadow-lg">
-                                <button
-                                    type="button"
-                                    className="relative block w-full focus:outline-none"
-                                    onClick={() => openLightbox(activeIndex)}
-                                >
-                                    <img
-                                        src={gallery.photos[activeIndex]?.photo_url ?? gallery.photos[0].photo_url}
-                                        alt={gallery.photos[activeIndex]?.caption ?? gallery.title}
-                                        className="w-full max-h-[520px] object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-black/10 opacity-0 transition group-hover:opacity-30" />
-                                </button>
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h2 className="text-2xl font-semibold tracking-tight">Gallery Collection</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Click any image to view it in full screen and browse the collection.
+                                    </p>
+                                </div>
+                                <Button onClick={() => openLightbox(0)} className="rounded-full">
+                                    View full collection
+                                </Button>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3">
-                                <Button onClick={() => openLightbox(activeIndex)}>Open lightbox</Button>
-                                <span className="text-sm text-muted-foreground">
-                                    Click any thumbnail below to view it larger.
-                                </span>
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {gallery.photos.map((photo, index) => (
-                                    <button
+                                    <div
                                         key={photo.id}
-                                        type="button"
                                         className={cn(
-                                            'group relative overflow-hidden rounded-2xl border text-left transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary',
-                                            activeIndex === index ? 'ring-2 ring-primary' : ''
+                                            'group relative aspect-square overflow-hidden rounded-3xl border bg-muted/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl cursor-pointer',
+                                            activeIndex === index ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
                                         )}
                                         onClick={() => openLightbox(index)}
                                     >
                                         <img
                                             src={photo.photo_url}
                                             alt={photo.caption ?? `Gallery image ${index + 1}`}
-                                            className="h-48 w-full object-cover transition duration-500 group-hover:scale-105"
+                                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            loading="lazy"
                                         />
+                                        
+                                        <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/20" />
+                                        
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                                            <div className="h-12 w-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 scale-90 group-hover:scale-100 transition-transform duration-500">
+                                                <Images className="h-5 w-5 text-white" />
+                                            </div>
+                                        </div>
+
                                         {photo.caption ? (
-                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent p-3 text-xs text-white">
-                                                {photo.caption}
+                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                                                <p className="text-sm font-medium text-white line-clamp-2">
+                                                    {photo.caption}
+                                                </p>
                                             </div>
                                         ) : null}
-                                    </button>
+                                    </div>
                                 ))}
                             </div>
                         </div>

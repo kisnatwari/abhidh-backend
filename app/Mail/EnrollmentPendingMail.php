@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -44,6 +45,12 @@ class EnrollmentPendingMail extends Mailable implements ShouldQueue
 
     public function attachments(): array
     {
+        if ($this->enrollment->payment_screenshot_path) {
+            return [
+                Attachment::fromStorage($this->enrollment->payment_screenshot_path)
+                    ->as('payment_screenshot.' . pathinfo($this->enrollment->payment_screenshot_path, PATHINFO_EXTENSION))
+            ];
+        }
         return [];
     }
 }

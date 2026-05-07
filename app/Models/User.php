@@ -58,4 +58,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new QueuedVerifyEmail());
     }
+
+    /**
+     * Get the enrollments for the user.
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
 }

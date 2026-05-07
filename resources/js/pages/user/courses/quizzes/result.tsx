@@ -1,0 +1,100 @@
+import StudentDashboardLayout from '@/layouts/student-dashboard-layout';
+import QuizController from '@/actions/App/Http/Controllers/User/QuizController';
+import { Head, Link } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, XCircle, Trophy, RefreshCcw, Home } from 'lucide-react';
+
+interface PageProps {
+    attempt: any;
+    course: any;
+    passed: boolean;
+    pass_mark: number;
+    enrollment_id?: number;
+}
+
+export default function QuizResult({ attempt, course, passed, pass_mark, enrollment_id }: PageProps) {
+    const score = Math.round(attempt.score_percentage);
+
+    return (
+        <StudentDashboardLayout>
+            <Head title={`Quiz Result - ${course.title}`} />
+            <div className="flex flex-col items-center justify-center min-h-[80vh] p-6">
+                <div className="w-full max-w-2xl text-center space-y-8">
+                    {/* Status Icon */}
+                    <div className="flex justify-center">
+                        {passed ? (
+                            <div className="bg-green-100 p-6 rounded-full border-8 border-green-50 shadow-lg shadow-green-100">
+                                <Trophy className="h-20 w-20 text-green-600 animate-bounce" />
+                            </div>
+                        ) : (
+                            <div className="bg-red-100 p-6 rounded-full border-8 border-red-50 shadow-lg shadow-red-100">
+                                <XCircle className="h-20 w-20 text-red-600 animate-pulse" />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <h1 className={`text-4xl font-extrabold tracking-tight ${passed ? 'text-green-700' : 'text-red-700'}`}>
+                            {passed ? 'Congratulations! You Passed' : 'Keep Practicing! You failed'}
+                        </h1>
+                        <p className="text-slate-500 text-lg font-medium">
+                            {course.title} Final Assessment
+                        </p>
+                    </div>
+
+                    <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
+                        <CardContent className="p-0">
+                            <div className="grid grid-cols-2 divide-x divide-slate-100">
+                                <div className="p-10 space-y-1">
+                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Your Score</p>
+                                    <p className={`text-6xl font-black ${passed ? 'text-green-600' : 'text-red-600'}`}>
+                                        {score}<span className="text-2xl font-bold text-slate-400">%</span>
+                                    </p>
+                                </div>
+                                <div className="p-10 space-y-1">
+                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Passing Score</p>
+                                    <p className="text-6xl font-black text-slate-700">
+                                        {pass_mark}<span className="text-2xl font-bold text-slate-400">%</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="bg-slate-50 p-6 flex justify-around border-t border-slate-100">
+                                <div className="text-center">
+                                    <p className="text-xs font-bold text-slate-400 uppercase">Total Questions</p>
+                                    <p className="font-bold text-slate-700">{attempt.total_questions}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs font-bold text-slate-400 uppercase">Correct Answers</p>
+                                    <p className="font-bold text-slate-700">{attempt.correct_answers}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs font-bold text-slate-400 uppercase">Status</p>
+                                    <Badge variant={passed ? 'default' : 'destructive'} className={passed ? "bg-green-600" : ""}>
+                                        {passed ? 'PASSED' : 'FAILED'}
+                                    </Badge>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        {!passed && (
+                            <Link href={QuizController.start.url(course.id)}>
+                                <Button className="h-14 px-8 rounded-2xl font-bold bg-primary shadow-xl shadow-primary/20 gap-2">
+                                    <RefreshCcw className="h-5 w-5" /> Retake Quiz
+                                </Button>
+                            </Link>
+                        )}
+                        <Link href={`/academy/my-enrollments/${enrollment_id || ''}`}>
+                            <Button variant="outline" className="h-14 px-8 rounded-2xl font-bold gap-2 border-slate-200 hover:bg-slate-50">
+                                <Home className="h-5 w-5" /> Back to Dashboard
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </StudentDashboardLayout>
+    );
+}

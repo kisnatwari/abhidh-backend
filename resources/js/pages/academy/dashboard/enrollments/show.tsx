@@ -542,6 +542,24 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                     </Card>
                 ) : null}
 
+                {isCourseComplete && isSelfPaced && !contentLocked && (
+                    <Card className="rounded-xl border border-primary/20 bg-primary/5 shadow-md overflow-hidden">
+                        <CardContent className="p-8 text-center space-y-4">
+                            <Sparkles className="h-12 w-12 text-primary mx-auto" />
+                            <h2 className="text-xl font-bold text-slate-900">Assessment Ready!</h2>
+                            <p className="text-sm text-slate-600 max-w-md mx-auto">
+                                You've finished all topics! Ready to test your knowledge? Take the final assessment to complete the course.
+                            </p>
+                            <Button 
+                                onClick={() => router.visit(`/academy/courses/${enrollment.course?.id}/quiz`)}
+                                className="h-12 px-10 rounded-full font-bold shadow-lg shadow-primary/20"
+                            >
+                                Start Final Quiz
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {isSelfPaced ? (
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
                         <Card className="rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-6 lg:self-start">

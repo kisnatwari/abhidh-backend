@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import CourseController from '@/actions/App/Http/Controllers/CourseController';
+import QuizController from '@/actions/App/Http/Controllers/Admin/QuizController';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -284,6 +285,14 @@ export default function CoursesIndex() {
                           <Users className="mr-2 h-4 w-4" />
                           See enrollments
                         </DropdownMenuItem>
+                        {course.course_type === 'self_paced' && (
+                          <DropdownMenuItem
+                            onClick={() => router.visit(QuizController.index.url(course.id))}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Manage Quiz
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DeleteCourseDialog
                           course={course}

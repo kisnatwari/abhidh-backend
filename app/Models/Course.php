@@ -24,6 +24,8 @@ class Course extends Model
         'topics',
         'program_id',
         'featured',
+        'quiz_time_limit_minutes',
+        'quiz_pass_marks',
     ];
 
     protected $casts = [
@@ -32,7 +34,18 @@ class Course extends Model
         'key_learning_objectives' => 'array',
         'featured' => 'boolean',
         'price' => 'decimal:2',
+        'quiz_time_limit_minutes' => 'integer',
     ];
+
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
 
     public function program(): BelongsTo
     {

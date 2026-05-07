@@ -15,6 +15,8 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ContactUsController;
+use App\Http\Controllers\Admin\QuizController as AdminQuizController;
+use App\Http\Controllers\User\QuizController as UserQuizController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -43,6 +45,11 @@ Route::middleware(['auth', 'verified'])->prefix('academy')->name('academy.')->gr
     Route::post('my-enrollments/{enrollment}/topics/{topic}/subtopics/{subtopic}/complete', [StudentDashboardController::class, 'markSubtopicCompleted'])->name('dashboard.enrollments.subtopics.complete');
     Route::get('profile', [StudentDashboardController::class, 'profile'])->name('dashboard.profile');
     Route::put('profile', [StudentDashboardController::class, 'updateProfile'])->name('dashboard.profile.update');
+    
+    // Quiz routes for students
+    Route::get('courses/{course}/quiz', [UserQuizController::class, 'start'])->name('dashboard.quiz.start');
+    Route::post('quiz/submit', [UserQuizController::class, 'submit'])->name('dashboard.quiz.submit');
+    Route::get('quiz/result/{attempt}', [UserQuizController::class, 'result'])->name('dashboard.quiz.result');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -91,6 +98,13 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::delete('contact-us/{contactUs}', [ContactUsController::class, 'destroy'])->name('contact-us.destroy');
     Route::resource('partners', PartnerController::class)->except(['update']);
     Route::post('partners/{partner}', [PartnerController::class, 'update'])->name('partners.update');
+
+    // Quiz routes for Admin
+    Route::get('courses/{course}/quizzes', [AdminQuizController::class, 'index'])->name('quizzes.index');
+    Route::post('courses/{course}/quiz-settings', [AdminQuizController::class, 'updateSettings'])->name('quizzes.update-settings');
+    Route::post('quizzes', [AdminQuizController::class, 'store'])->name('quizzes.store');
+    Route::post('quizzes/bulk-upload', [AdminQuizController::class, 'bulkUpload'])->name('quizzes.bulk-upload');
+    Route::delete('quizzes/{quiz}', [AdminQuizController::class, 'destroy'])->name('quizzes.destroy');
 });
 
 require __DIR__.'/settings.php';

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
-import { ArrowLeft, Edit, Trash2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Eye, EyeOff, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import DeleteCourseDialog from './components/delete';
 
 type Course = {
@@ -127,6 +127,16 @@ export default function ShowCourse() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {course.course_type === 'self_paced' && (
+                            <Button
+                                variant="outline"
+                                onClick={() => router.visit(`/courses/${course.id}/quizzes`)}
+                                className="bg-primary/5 border-primary/20 hover:bg-primary/10 text-primary"
+                            >
+                                <HelpCircle className="h-4 w-4 mr-2" />
+                                Manage Quiz
+                            </Button>
+                        )}
                         {programs && (
                             <Button
                                 variant="outline"

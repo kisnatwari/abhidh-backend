@@ -180,6 +180,7 @@ class PublicAcademyController extends Controller
     public function galleries(): Response
     {
         $galleries = Gallery::with('photos')
+            ->where('option', 'Abhidh Academy')
             ->latest()
             ->get()
             ->map(fn(Gallery $gallery) => $this->galleryResource($gallery));
@@ -191,9 +192,11 @@ class PublicAcademyController extends Controller
 
     public function showGallery(Gallery $gallery): Response
     {
+        abort_unless($gallery->option === 'Abhidh Academy', 404);
         $gallery->load('photos');
 
         $related = Gallery::with('photos')
+            ->where('option', 'Abhidh Academy')
             ->where('id', '!=', $gallery->id)
             ->latest()
             ->take(6)

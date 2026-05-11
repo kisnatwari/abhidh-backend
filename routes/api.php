@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\ContactUsController;
+use App\Http\Controllers\Api\LegalPageController;
 
 // Public routes
 Route::prefix('auth')->group(function () {
@@ -50,6 +51,9 @@ Route::get('courses/programs/list', [CourseController::class, 'programs']);
 
 // Contact Us route (public, no authentication required)
 Route::post('contact-us', [ContactUsController::class, 'store']);
+
+// Public legal pages (terms & privacy policy)
+Route::get('legal-pages/{type}', [LegalPageController::class, 'show']);
 
 // File upload route (no authentication required for now)
 Route::post('upload', [FileUploadController::class, 'upload']);

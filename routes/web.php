@@ -15,10 +15,15 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\ContactUsController;
+use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\Admin\QuizController as AdminQuizController;
 use App\Http\Controllers\User\QuizController as UserQuizController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Public legal pages
+Route::get('/privacy', [LegalPageController::class, 'showPrivacy'])->name('legal.privacy');
+Route::get('/terms', [LegalPageController::class, 'showTerms'])->name('legal.terms');
 
 Route::controller(PublicAcademyController::class)->group(function () {
     Route::get('/', 'index')->name('academy.home');
@@ -98,6 +103,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::delete('contact-us/{contactUs}', [ContactUsController::class, 'destroy'])->name('contact-us.destroy');
     Route::resource('partners', PartnerController::class)->except(['update']);
     Route::post('partners/{partner}', [PartnerController::class, 'update'])->name('partners.update');
+
+    Route::resource('legal-pages', LegalPageController::class)->except(['update']);
+    Route::post('legal-pages/{legalPage}', [LegalPageController::class, 'update'])->name('legal-pages.update');
 
     // Quiz routes for Admin
     Route::get('courses/{course}/quizzes', [AdminQuizController::class, 'index'])->name('quizzes.index');

@@ -380,23 +380,49 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers, partners }: Home
                             <h2 className="text-3xl font-bold md:text-4xl">Our Trusted Partners</h2>
                         </div>
                     </div>
-                    
-                    <div className="relative flex overflow-x-hidden">
-                        <div className="flex animate-marquee whitespace-nowrap py-12 items-center">
+
+                    <div className="relative w-full overflow-hidden group">
+                        <div
+                            className="flex w-fit animate-marquee-slow gap-8 py-8 px-4 items-center group-hover:[animation-play-state:paused]"
+                        >
                             {partners.concat(partners).map((partner, index) => (
-                                <div key={`${partner.id}-${index}`} className="mx-12 flex-shrink-0">
+                                <div
+                                    key={`${partner.id}-${index}`}
+                                    className="flex h-28 w-48 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-card/50 p-5 backdrop-blur-lg shadow-[0_15px_35px_-15px_rgba(16,28,70,0.5)] transition-all duration-300 hover:-translate-y-2 hover:border-primary/40 hover:shadow-[0_20px_45px_-15px_rgba(20,40,90,0.5)]"
+                                >
                                     {partner.link ? (
-                                        <a href={partner.link} target="_blank" rel="noopener noreferrer" className="grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-                                            <img src={partner.logo_url ?? ''} alt={partner.name} className="h-12 w-auto object-contain max-w-[150px]" />
+                                        <a href={partner.link} target="_blank" rel="noopener noreferrer" className="block w-full">
+                                            <div className="h-16 w-full flex items-center justify-center">
+                                                <img
+                                                    src={partner.logo_url ?? ''}
+                                                    alt={partner.name}
+                                                    className="max-h-full max-w-full object-contain"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner.name)}&background=random&color=fff&size=128`;
+                                                    }}
+                                                />
+                                            </div>
                                         </a>
                                     ) : (
-                                        <div className="grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-                                            <img src={partner.logo_url ?? ''} alt={partner.name} className="h-12 w-auto object-contain max-w-[150px]" />
+                                        <div className="w-full">
+                                            <div className="h-16 w-full flex items-center justify-center">
+                                                <img
+                                                    src={partner.logo_url ?? ''}
+                                                    alt={partner.name}
+                                                    className="max-h-full max-w-full object-contain"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner.name)}&background=random&color=fff&size=128`;
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
                             ))}
                         </div>
+
+                        <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent" />
+                        <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent" />
                     </div>
                 </section>
             )}

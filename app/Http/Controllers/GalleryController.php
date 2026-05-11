@@ -58,7 +58,7 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'option' => ['nullable', Rule::in(['Abhidh', 'Abhidh Creative', 'Abhidh Academy'])],
+            'option' => ['nullable', Rule::in(['Abhidh Group', 'Abhidh Creative', 'Abhidh Academy'])],
             'media_type' => ['required', Rule::in(['image_group', 'youtube'])],
             'photos' => [
                 'nullable',
@@ -136,7 +136,7 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'option' => ['nullable', Rule::in(['Abhidh', 'Abhidh Creative', 'Abhidh Academy'])],
+            'option' => ['nullable', Rule::in(['Abhidh Group', 'Abhidh Creative', 'Abhidh Academy'])],
             'media_type' => ['required', Rule::in(['image_group', 'youtube'])],
             'photos' => ['nullable', 'array'],
             'photos.*' => ['image', 'max:2048'],

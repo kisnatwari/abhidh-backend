@@ -61,6 +61,7 @@
     --color-sidebar-ring: var(--sidebar-ring);
 
     --animate-marquee: marquee 30s linear infinite;
+    --animate-marquee-slow: marquee 45s linear infinite;
 
     @keyframes marquee {
         from {

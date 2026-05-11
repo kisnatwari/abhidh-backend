@@ -16,6 +16,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import RichTextEditor from '@/components/rich-text-editor';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Image as ImageIcon, Loader2, X, Youtube } from 'lucide-react';
 
 type PhotoPreview = {
@@ -182,6 +189,7 @@ export default function EditGalleryDialog({ gallery, trigger }: { gallery: any, 
                                     onChange={setDescription}
                                     placeholder="Describe your gallery..."
                                     name="description"
+                                    editorHeight={120}
                                 />
                                 <InputError message={errors.description} />
                             </div>
@@ -189,31 +197,29 @@ export default function EditGalleryDialog({ gallery, trigger }: { gallery: any, 
                             {/* Option */}
                             <div className="grid gap-2">
                                 <Label htmlFor="option">Option</Label>
-                                <select
-                                    id="option"
-                                    name="option"
-                                    defaultValue={gallery.option || ''}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <option value="">Select an option</option>
-                                    <option value="Abhidh Group">Abhidh Group</option>
-                                    <option value="Abhidh Creative">Abhidh Creative</option>
-                                    <option value="Abhidh Academy">Abhidh Academy</option>
-                                </select>
+                                <Select name="option" defaultValue={gallery.option || undefined}>
+                                    <SelectTrigger id="option">
+                                        <SelectValue placeholder="Select an option" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Abhidh Group">Abhidh Group</SelectItem>
+                                        <SelectItem value="Abhidh Creative">Abhidh Creative</SelectItem>
+                                        <SelectItem value="Abhidh Academy">Abhidh Academy</SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <InputError message={errors.option} />
                             </div>
 
                             {/* Media Type */}
                             <div className="grid gap-2">
                                 <Label htmlFor="media_type">Content Type</Label>
-                                <select
-                                    id="media_type"
+                                <Select
                                     name="media_type"
                                     value={mediaType}
-                                    onChange={(event) => {
-                                        const value = event.target.value as 'image_group' | 'youtube';
-                                        setMediaType(value);
-                                        if (value === 'youtube') {
+                                    onValueChange={(value) => {
+                                        const v = value as 'image_group' | 'youtube';
+                                        setMediaType(v);
+                                        if (v === 'youtube') {
                                             newPhotos.forEach((photo) => URL.revokeObjectURL(photo.preview));
                                             setNewPhotos([]);
                                         } else {
@@ -221,11 +227,15 @@ export default function EditGalleryDialog({ gallery, trigger }: { gallery: any, 
                                             setYoutubeVideoId(null);
                                         }
                                     }}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <option value="image_group">Group of Images</option>
-                                    <option value="youtube">YouTube Video</option>
-                                </select>
+                                    <SelectTrigger id="media_type">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="image_group">Group of Images</SelectItem>
+                                        <SelectItem value="youtube">YouTube Video</SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <InputError message={errors.media_type} />
                             </div>
 
@@ -393,7 +403,8 @@ export default function EditGalleryDialog({ gallery, trigger }: { gallery: any, 
                                             key={`photo-${index}`}
                                             type="file"
                                             name="photos[]"
-                                            style={{ display: 'none' }}
+                                            aria-label={`New photo ${index + 1}`}
+                                            className="hidden"
                                             ref={(el) => {
                                                 if (el) {
                                                     const dataTransfer = new DataTransfer();

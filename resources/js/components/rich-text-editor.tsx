@@ -12,6 +12,7 @@ interface RichTextEditorProps {
   className?: string;
   disabled?: boolean;
   name?: string;
+  editorHeight?: number;
 }
 
 export default function RichTextEditor({
@@ -21,6 +22,7 @@ export default function RichTextEditor({
   className,
   disabled = false,
   name,
+  editorHeight = 220,
 }: RichTextEditorProps) {
   const [quill, setQuill] = React.useState<Quill | null>(null);
   const editorRef = React.useRef<HTMLDivElement>(null);
@@ -60,6 +62,15 @@ export default function RichTextEditor({
       },
     });
 
+    // Constrain the editable area (not the whole container, which includes the toolbar).
+    // editorRef.current IS the .ql-container after Quill mounts, so querySelector it for .ql-editor.
+    const qlEditor = editorRef.current.querySelector<HTMLElement>('.ql-editor');
+    if (qlEditor) {
+      qlEditor.style.minHeight = '80px';
+      qlEditor.style.height = `${editorHeight}px`;
+      qlEditor.style.overflowY = 'auto';
+    }
+
     if (value) {
       editor.root.innerHTML = value;
     } else {
@@ -79,7 +90,7 @@ export default function RichTextEditor({
     return () => {
       editor.off('text-change', handleTextChange);
     };
-  }, [disabled, placeholder]);
+  }, [disabled, placeholder, editorHeight]);
 
   React.useEffect(() => {
     if (!quill) return;
@@ -101,7 +112,7 @@ export default function RichTextEditor({
   }, [disabled, quill]);
 
   return (
-    <div className={cn('w-full', className)} style={{ marginBottom: '4rem' }}>
+    <div className={cn('w-full', className)}>
       <div ref={editorRef} />
       {name && (
         <input

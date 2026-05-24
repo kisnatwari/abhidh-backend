@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Compass, Rocket, Sparkles } from 'lucide-react';
+import { Award, ChevronRight, Compass, Download, Rocket, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type EnrollmentProgress = {
@@ -18,6 +18,13 @@ type EnrollmentProgress = {
     } | null;
 };
 
+type Certificate = {
+    id: number;
+    certificateNumber: string;
+    issuedAt: string;
+    downloadUrl: string;
+};
+
 type EnrollmentSummary = {
     id: number;
     courseTitle?: string;
@@ -28,6 +35,7 @@ type EnrollmentSummary = {
     paymentVerified: boolean;
     enrollmentDate: string | null;
     progress?: EnrollmentProgress | null;
+    certificate: Certificate | null;
 };
 
 type EnrollmentListProps = {
@@ -162,6 +170,30 @@ export default function EnrollmentList({ enrollments, availableCourses }: Enroll
                                                 </span>
                                             ) : null}
                                         </div>
+                                    </div>
+                                ) : null}
+
+                                {enrollment.certificate ? (
+                                    <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                        <div className="flex items-center gap-2 text-xs font-medium text-emerald-700">
+                                            <Award className="h-4 w-4 shrink-0" />
+                                            <span>
+                                                Certificate earned · <span className="font-mono">{enrollment.certificate.certificateNumber}</span>
+                                                <span className="ml-1 text-emerald-600 font-normal">· {enrollment.certificate.issuedAt}</span>
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                window.location.href = enrollment.certificate!.downloadUrl;
+                                            }}
+                                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                        >
+                                            <Download className="h-3 w-3" />
+                                            Download PDF
+                                        </button>
                                     </div>
                                 ) : null}
                             </Link>

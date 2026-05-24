@@ -18,12 +18,17 @@ use App\Http\Controllers\ContactUsController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\Admin\QuizController as AdminQuizController;
 use App\Http\Controllers\User\QuizController as UserQuizController;
+use App\Http\Controllers\CertificateController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Public legal pages
 Route::get('/privacy', [LegalPageController::class, 'showPrivacy'])->name('legal.privacy');
 Route::get('/terms', [LegalPageController::class, 'showTerms'])->name('legal.terms');
+
+// Public certificate verification
+Route::get('/verify-certificate', [CertificateController::class, 'verifyPage'])->name('certificate.verify.page');
+Route::get('/verify-certificate/{code}', [CertificateController::class, 'verify'])->name('certificate.verify');
 
 Route::controller(PublicAcademyController::class)->group(function () {
     Route::get('/', 'index')->name('academy.home');
@@ -55,6 +60,10 @@ Route::middleware(['auth', 'verified'])->prefix('academy')->name('academy.')->gr
     Route::get('courses/{course}/quiz', [UserQuizController::class, 'start'])->name('dashboard.quiz.start');
     Route::post('quiz/submit', [UserQuizController::class, 'submit'])->name('dashboard.quiz.submit');
     Route::get('quiz/result/{attempt}', [UserQuizController::class, 'result'])->name('dashboard.quiz.result');
+
+    // Certificate routes
+    Route::post('quiz/certificate/{attempt}', [CertificateController::class, 'generate'])->name('certificate.generate');
+    Route::get('certificate/{certificate}/download', [CertificateController::class, 'download'])->name('certificate.download');
 });
 
 Route::middleware(['auth'])->group(function () {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Academy;
 
 use App\Http\Controllers\Controller;
+use App\Models\Certificate;
 use App\Models\Enrollment;
 use App\Models\Course;
 use App\Services\Enrollment\EnrollmentProgressService;
@@ -92,8 +93,12 @@ class StudentDashboardController extends Controller
             ->latest('created_at')
             ->get();
 
+        $certificates = Certificate::where('user_id', $user->id)
+            ->get()
+            ->keyBy('course_id');
+
         $enrollments = $enrollmentModels
-            ->map(function (Enrollment $enrollment) {
+            ->map(function (Enrollment $enrollment) use ($certificates) {
                 $progressSummary = null;
 
                 if ($enrollment->course?->course_type === 'self_paced') {
@@ -120,6 +125,8 @@ class StudentDashboardController extends Controller
                     ];
                 }
 
+                $cert = $certificates->get($enrollment->course?->id);
+
                 return [
                     'id' => $enrollment->id,
                     'courseTitle' => $enrollment->course?->title,
@@ -130,6 +137,12 @@ class StudentDashboardController extends Controller
                     'paymentVerified' => (bool) $enrollment->payment_verified,
                     'enrollmentDate' => optional($enrollment->created_at)->toDateTimeString(),
                     'progress' => $progressSummary,
+                    'certificate' => $cert ? [
+                        'id' => $cert->id,
+                        'certificateNumber' => $cert->certificate_number,
+                        'issuedAt' => $cert->issued_at->format('jS M, Y'),
+                        'downloadUrl' => route('academy.certificate.download', $cert->id),
+                    ] : null,
                 ];
             })
             ->values();
@@ -162,6 +175,10 @@ class StudentDashboardController extends Controller
 
         $enrollment->load(['course.program']);
 
+        $cert = Certificate::where('user_id', $user->id)
+            ->where('course_id', $enrollment->course_id)
+            ->first();
+
         return Inertia::render('academy/dashboard/enrollments/show', [
             'enrollment' => [
                 'id' => $enrollment->id,
@@ -170,6 +187,12 @@ class StudentDashboardController extends Controller
                 'isPaid' => (bool) $enrollment->is_paid,
                 'enrollmentDate' => optional($enrollment->enrollment_date ?? $enrollment->created_at)->toDateTimeString(),
                 'course' => $this->courseStudyResource($enrollment->course, $enrollment),
+                'certificate' => $cert ? [
+                    'id' => $cert->id,
+                    'certificateNumber' => $cert->certificate_number,
+                    'issuedAt' => $cert->issued_at->format('jS M, Y'),
+                    'downloadUrl' => route('academy.certificate.download', $cert->id),
+                ] : null,
             ],
         ]);
     }

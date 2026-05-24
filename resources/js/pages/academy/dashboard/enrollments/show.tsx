@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
-import { ArrowLeft, BookOpen, BookOpenCheck, CheckCircle, Clock, LayoutList, Play, Sparkles, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Award, BookOpen, BookOpenCheck, CheckCircle, Clock, Download, LayoutList, Play, Sparkles, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TopicProgressItem = {
@@ -89,6 +89,13 @@ type EnrollmentCourse = {
     progress?: CourseProgressPayload | null;
 };
 
+type EnrollmentCertificate = {
+    id: number;
+    certificateNumber: string;
+    issuedAt: string;
+    downloadUrl: string;
+};
+
 type EnrollmentDetailProps = {
     enrollment: {
         id: number;
@@ -97,6 +104,7 @@ type EnrollmentDetailProps = {
         isPaid: boolean;
         enrollmentDate: string | null;
         course: EnrollmentCourse | null;
+        certificate: EnrollmentCertificate | null;
     };
 };
 
@@ -542,7 +550,28 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                     </Card>
                 ) : null}
 
-                {isCourseComplete && isSelfPaced && !contentLocked && (
+                {enrollment.certificate ? (
+                    <Card className="rounded-xl border border-emerald-200 bg-emerald-50 shadow-md overflow-hidden">
+                        <CardContent className="p-8 text-center space-y-4">
+                            <Award className="h-12 w-12 text-emerald-600 mx-auto" />
+                            <h2 className="text-xl font-bold text-slate-900">Certificate Earned</h2>
+                            <p className="text-sm text-slate-600 max-w-md mx-auto">
+                                Congratulations! You successfully completed this course on{' '}
+                                <strong>{enrollment.certificate.issuedAt}</strong>.
+                            </p>
+                            <p className="text-xs font-mono text-slate-500">
+                                Certificate No: {enrollment.certificate.certificateNumber}
+                            </p>
+                            <a
+                                href={enrollment.certificate.downloadUrl}
+                                className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-700"
+                            >
+                                <Download className="h-4 w-4" />
+                                Download Certificate PDF
+                            </a>
+                        </CardContent>
+                    </Card>
+                ) : isCourseComplete && isSelfPaced && !contentLocked ? (
                     <Card className="rounded-xl border border-primary/20 bg-primary/5 shadow-md overflow-hidden">
                         <CardContent className="p-8 text-center space-y-4">
                             <Sparkles className="h-12 w-12 text-primary mx-auto" />
@@ -550,7 +579,7 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                             <p className="text-sm text-slate-600 max-w-md mx-auto">
                                 You've finished all topics! Ready to test your knowledge? Take the final assessment to complete the course.
                             </p>
-                            <Button 
+                            <Button
                                 onClick={() => router.visit(`/academy/courses/${enrollment.course?.id}/quiz`)}
                                 className="h-12 px-10 rounded-full font-bold shadow-lg shadow-primary/20"
                             >
@@ -558,7 +587,7 @@ export default function EnrollmentDetail({ enrollment }: EnrollmentDetailProps) 
                             </Button>
                         </CardContent>
                     </Card>
-                )}
+                ) : null}
 
                 {isSelfPaced ? (
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">

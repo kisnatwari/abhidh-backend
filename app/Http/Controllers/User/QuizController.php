@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
@@ -21,9 +22,18 @@ class QuizController extends Controller
         }
 
         // Check enrollment (assuming enrollment logic exists)
-        $isEnrolled = $course->enrollments()->where('user_id', Auth::id())->exists();
-        if (!$isEnrolled) {
+        $enrollment = $course->enrollments()->where('user_id', Auth::id())->first();
+        if (!$enrollment) {
             abort(403, 'You must be enrolled in this course to take the quiz.');
+        }
+
+        // Block re-attempt if the student already has a certificate for this course
+        $existingCert = Certificate::where('user_id', Auth::id())
+            ->where('course_id', $course->id)
+            ->first();
+        if ($existingCert) {
+            return redirect()->route('academy.dashboard.enrollments.show', $enrollment->id)
+                ->with('info', 'You have already earned a certificate for this course.');
         }
 
         $quizzes = Quiz::with('options')
@@ -105,12 +115,20 @@ class QuizController extends Controller
         $passMark = $course->quiz_pass_marks ?? 40;
         $passed = $attempt->score_percentage >= $passMark;
 
+        $certificate = Certificate::where('user_id', Auth::id())
+            ->where('course_id', $course->id)
+            ->first();
+
         return Inertia::render('user/courses/quizzes/result', [
             'attempt' => $attempt,
             'course' => $course,
             'passed' => $passed,
             'pass_mark' => $passMark,
             'enrollment_id' => $enrollment?->id,
+            'certificate' => $certificate ? [
+                'id' => $certificate->id,
+                'certificate_number' => $certificate->certificate_number,
+            ] : null,
         ]);
     }
 }

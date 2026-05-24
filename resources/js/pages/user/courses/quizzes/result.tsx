@@ -4,7 +4,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, Trophy, RefreshCcw, Home } from 'lucide-react';
+import { XCircle, Trophy, RefreshCcw, Home, Award, Download } from 'lucide-react';
 
 interface PageProps {
     attempt: any;
@@ -12,9 +12,10 @@ interface PageProps {
     passed: boolean;
     pass_mark: number;
     enrollment_id?: number;
+    certificate?: { id: number; certificate_number: string } | null;
 }
 
-export default function QuizResult({ attempt, course, passed, pass_mark, enrollment_id }: PageProps) {
+export default function QuizResult({ attempt, course, passed, pass_mark, enrollment_id, certificate }: PageProps) {
     const score = Math.round(attempt.score_percentage);
 
     return (
@@ -86,6 +87,20 @@ export default function QuizResult({ attempt, course, passed, pass_mark, enrollm
                                     <RefreshCcw className="h-5 w-5" /> Retake Quiz
                                 </Button>
                             </Link>
+                        )}
+                        {passed && !certificate && (
+                            <Link href={`/academy/quiz/certificate/${attempt.id}`} method="post" as="button">
+                                <Button className="h-14 px-8 rounded-2xl font-bold bg-amber-500 hover:bg-amber-600 shadow-xl shadow-amber-200 gap-2">
+                                    <Award className="h-5 w-5" /> Get Certificate
+                                </Button>
+                            </Link>
+                        )}
+                        {passed && certificate && (
+                            <a href={`/academy/certificate/${certificate.id}/download`} target="_blank" rel="noopener noreferrer">
+                                <Button className="h-14 px-8 rounded-2xl font-bold bg-green-600 hover:bg-green-700 shadow-xl shadow-green-200 gap-2">
+                                    <Download className="h-5 w-5" /> Download Certificate
+                                </Button>
+                            </a>
                         )}
                         <Link href={`/academy/my-enrollments/${enrollment_id || ''}`}>
                             <Button variant="outline" className="h-14 px-8 rounded-2xl font-bold gap-2 border-slate-200 hover:bg-slate-50">

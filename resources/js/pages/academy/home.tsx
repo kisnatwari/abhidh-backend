@@ -370,59 +370,79 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers, partners }: Home
             </section>
 
             {partners.length > 0 && (
-                <section className="bg-background py-16 overflow-hidden">
-                    <div className="container mx-auto px-4 mb-10">
-                        <div className="text-center space-y-4">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1 text-sm font-semibold text-primary backdrop-blur-sm">
+                <section className="relative py-28 px-6 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/15 to-background" />
+                    <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl opacity-70" />
+
+                    <div className="container mx-auto relative">
+                        <div className="text-center mb-20 space-y-4">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1 text-sm font-semibold text-primary backdrop-blur-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                                 Partnerships that elevate
                             </div>
-                            <h2 className="text-3xl font-bold md:text-4xl">Our Trusted Partners</h2>
+                            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/70 to-foreground/50 bg-clip-text text-transparent">
+                                Our Trusted Partners
+                            </h2>
+                            <p className="text-lg text-muted-foreground/85 max-w-3xl mx-auto">
+                                We are proud to have collaborated with diverse organizations, from prestigious educational
+                                institutions to leading corporate brands, helping them scale and succeed.
+                            </p>
                         </div>
-                    </div>
 
-                    <div className="relative w-full overflow-hidden group">
-                        <div
-                            className="flex w-fit animate-marquee-slow gap-8 py-8 px-4 items-center group-hover:[animation-play-state:paused]"
-                        >
-                            {partners.concat(partners).map((partner, index) => (
-                                <div
-                                    key={`${partner.id}-${index}`}
-                                    className="flex h-28 w-48 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-card/50 p-5 backdrop-blur-lg shadow-[0_15px_35px_-15px_rgba(16,28,70,0.5)] transition-all duration-300 hover:-translate-y-2 hover:border-primary/40 hover:shadow-[0_20px_45px_-15px_rgba(20,40,90,0.5)]"
-                                >
-                                    {partner.link ? (
-                                        <a href={partner.link} target="_blank" rel="noopener noreferrer" className="block w-full">
-                                            <div className="h-16 w-full flex items-center justify-center">
-                                                <img
-                                                    src={partner.logo_url ?? ''}
-                                                    alt={partner.name}
-                                                    className="max-h-full max-w-full object-contain"
-                                                    onError={(e) => {
-                                                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner.name)}&background=random&color=fff&size=128`;
-                                                    }}
-                                                />
+                        <div className="relative mb-24 w-full overflow-hidden group">
+                            <div className="flex w-fit animate-marquee gap-8 py-8 px-4 group-hover:[animation-play-state:paused]">
+                                {[...partners, ...partners].map((partner, index) => (
+                                    <div
+                                        key={`${partner.id}-${index}`}
+                                        className="flex h-32 w-56 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-card/50 p-6 backdrop-blur-lg shadow-[0_15px_35px_-15px_rgba(16,28,70,0.5)] transition-all duration-300 hover:-translate-y-2 hover:border-primary/40 hover:shadow-[0_20px_45px_-15px_rgba(20,40,90,0.5)]"
+                                    >
+                                        {partner.link ? (
+                                            <a href={partner.link} target="_blank" rel="noopener noreferrer" className="block w-full">
+                                                <div className="h-20 w-full flex items-center justify-center">
+                                                    <img
+                                                        src={partner.logo_url ?? ''}
+                                                        alt={partner.name}
+                                                        className="max-h-full max-w-full object-contain"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner.name)}&background=random&color=fff&size=128`;
+                                                        }}
+                                                    />
+                                                </div>
+                                            </a>
+                                        ) : (
+                                            <div className="w-full">
+                                                <div className="h-20 w-full flex items-center justify-center">
+                                                    <img
+                                                        src={partner.logo_url ?? ''}
+                                                        alt={partner.name}
+                                                        className="max-h-full max-w-full object-contain"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner.name)}&background=random&color=fff&size=128`;
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
-                                        </a>
-                                    ) : (
-                                        <div className="w-full">
-                                            <div className="h-16 w-full flex items-center justify-center">
-                                                <img
-                                                    src={partner.logo_url ?? ''}
-                                                    alt={partner.name}
-                                                    className="max-h-full max-w-full object-contain"
-                                                    onError={(e) => {
-                                                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(partner.name)}&background=random&color=fff&size=128`;
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent" />
+                            <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent" />
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {[
+                                { value: '50+', label: 'Educational Institutions' },
+                                { value: '100+', label: 'Corporate Clients' },
+                                { value: '5+', label: 'Years Excellence' },
+                            ].map((stat, index) => (
+                                <div key={index} className="rounded-2xl border border-white/10 bg-card/40 p-6 text-center backdrop-blur-md shadow-inner shadow-primary/10">
+                                    <div className="text-4xl font-bold text-primary mb-2">{stat.value}</div>
+                                    <p className="text-muted-foreground/80 font-medium">{stat.label}</p>
                                 </div>
                             ))}
                         </div>
-
-                        <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent" />
-                        <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent" />
                     </div>
                 </section>
             )}

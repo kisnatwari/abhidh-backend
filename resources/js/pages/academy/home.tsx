@@ -378,10 +378,10 @@ const Home = ({ programs, featuredCourses, blogPosts, trainers, partners }: Home
                         <div className="text-center mb-20 space-y-4">
                             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1 text-sm font-semibold text-primary backdrop-blur-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                                Partnerships that elevate
+                                Impact that speaks
                             </div>
                             <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-foreground/70 to-foreground/50 bg-clip-text text-transparent">
-                                Our Trusted Partners
+                                Our Clients' Portfolio
                             </h2>
                             <p className="text-lg text-muted-foreground/85 max-w-3xl mx-auto">
                                 We are proud to have collaborated with diverse organizations, from prestigious educational

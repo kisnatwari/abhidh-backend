@@ -113,4 +113,16 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Contact Notification Recipient
+    |--------------------------------------------------------------------------
+    |
+    | The inbox that receives notifications when a visitor submits a contact
+    | or inquiry form from any of the public sites.
+    |
+    */
+
+    'admin_address' => env('MAIL_ADMIN_ADDRESS', 'info@abhidh.com'),
+
 ];

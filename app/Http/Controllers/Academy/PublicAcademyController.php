@@ -266,7 +266,7 @@ class PublicAcademyController extends Controller
         ]);
 
         try {
-            Mail::to('bcrypt81@gmail.com')->queue(
+            Mail::to(config('mail.admin_address'))->queue(
                 new ContactNotificationMail($contact)
             );
         } catch (\Throwable $th) {

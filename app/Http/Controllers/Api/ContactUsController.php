@@ -36,7 +36,7 @@ class ContactUsController extends Controller
 
             // Send notification email to admin
             try {
-                Mail::to('bcrypt81@gmail.com')->queue(
+                Mail::to(config('mail.admin_address'))->queue(
                     new ContactNotificationMail($contact)
                 );
             } catch (\Exception $e) {

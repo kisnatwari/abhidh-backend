@@ -367,7 +367,7 @@ const extractYoutubeId = (url: string): string | null => {
             return parsed.searchParams.get('v');
         }
 
-        if (parsed.pathname.startsWith('/embed/')) {
+        if (parsed.pathname.startsWith('/embed/') || parsed.pathname.startsWith('/shorts/')) {
             return parsed.pathname.split('/')[2] ?? null;
         }
     } catch (error) {
@@ -391,7 +391,7 @@ const getYoutubeThumbnail = (url?: string | null): string | null => {
             return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
         }
 
-        if (parsed.pathname.startsWith('/embed/')) {
+        if (parsed.pathname.startsWith('/embed/') || parsed.pathname.startsWith('/shorts/')) {
             const id = parsed.pathname.split('/')[2];
             return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
         }

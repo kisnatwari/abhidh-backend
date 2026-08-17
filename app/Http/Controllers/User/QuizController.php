@@ -44,6 +44,9 @@ class QuizController extends Controller
             return back()->with('error', 'No quiz questions available for this course yet.');
         }
 
+        // Never leak the correct answer to the client while the quiz is in progress.
+        $quizzes->each(fn ($quiz) => $quiz->options->makeHidden('is_correct'));
+
         // Create an attempt record
         $attempt = QuizAttempt::create([
             'user_id' => Auth::id(),
@@ -78,10 +81,10 @@ class QuizController extends Controller
         $correctCount = 0;
 
         foreach ($quizzes as $quiz) {
-            $userSelectedOptionIds = $validated['answers'][$quiz->id] ?? [];
-            $correctOptionIds = $quiz->options->where('is_correct', true)->pluck('id')->toArray();
+            $userSelectedOptionIds = array_map('intval', $validated['answers'][$quiz->id] ?? []);
+            $correctOptionIds = $quiz->options->where('is_correct', true)->pluck('id')->map(fn ($id) => (int) $id)->toArray();
 
-            // Handle multiple correct options logic: 
+            // Handle multiple correct options logic:
             // All selected must be correct, and all correct must be selected.
             sort($userSelectedOptionIds);
             sort($correctOptionIds);

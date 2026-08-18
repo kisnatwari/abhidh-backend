@@ -120,6 +120,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('courses/{course}/quizzes', [AdminQuizController::class, 'index'])->name('quizzes.index');
     Route::post('courses/{course}/quiz-settings', [AdminQuizController::class, 'updateSettings'])->name('quizzes.update-settings');
     Route::post('quizzes', [AdminQuizController::class, 'store'])->name('quizzes.store');
+    Route::post('quizzes/{quiz}', [AdminQuizController::class, 'update'])->name('quizzes.update');
     Route::post('quizzes/bulk-upload', [AdminQuizController::class, 'bulkUpload'])->name('quizzes.bulk-upload');
     Route::delete('quizzes/{quiz}', [AdminQuizController::class, 'destroy'])->name('quizzes.destroy');
 });

@@ -76,6 +76,49 @@ class QuizController extends Controller
         return back()->with('success', 'Quiz question added successfully.');
     }
 
+    public function update(Request $request, Quiz $quiz)
+    {
+        $validated = $request->validate([
+            'question_text' => 'required|string',
+            'options' => 'required|array|min:2',
+            'options.*.id' => 'nullable|integer|exists:quiz_options,id',
+            'options.*.option_text' => 'required|string',
+            'options.*.is_correct' => 'required|boolean',
+        ]);
+
+        $hasCorrect = collect($validated['options'])->contains('is_correct', true);
+        if (!$hasCorrect) {
+            return back()->withErrors(['options' => 'At least one correct option is required.']);
+        }
+
+        DB::transaction(function () use ($validated, $quiz) {
+            $quiz->update(['question_text' => $validated['question_text']]);
+
+            $keepIds = [];
+            foreach ($validated['options'] as $option) {
+                if (!empty($option['id'])) {
+                    $quizOption = $quiz->options()->findOrFail($option['id']);
+                    $quizOption->update([
+                        'option_text' => $option['option_text'],
+                        'is_correct' => $option['is_correct'],
+                    ]);
+                    $keepIds[] = $quizOption->id;
+                } else {
+                    $created = QuizOption::create([
+                        'quiz_id' => $quiz->id,
+                        'option_text' => $option['option_text'],
+                        'is_correct' => $option['is_correct'],
+                    ]);
+                    $keepIds[] = $created->id;
+                }
+            }
+
+            $quiz->options()->whereNotIn('id', $keepIds)->delete();
+        });
+
+        return back()->with('success', 'Quiz question updated successfully.');
+    }
+
     public function bulkUpload(Request $request)
     {
         $request->validate([
@@ -121,24 +164,36 @@ class QuizController extends Controller
 
                 try {
                     DB::transaction(function () use ($row, $courseId, &$results) {
+                        $correctIndices = explode(',', $row['correct_options']);
+                        $correctIndices = array_map('trim', $correctIndices);
+
+                        // Dynamic options
+                        $options = [];
+                        for ($i = 1; $i <= 10; $i++) {
+                            $key = "option_{$i}";
+                            if (isset($row[$key]) && !empty(trim($row[$key]))) {
+                                $options[] = [
+                                    'option_text' => trim($row[$key]),
+                                    'is_correct' => in_array((string)$i, $correctIndices),
+                                ];
+                            }
+                        }
+
+                        if (!collect($options)->contains('is_correct', true)) {
+                            throw new \Exception('correct_options ("' . $row['correct_options'] . '") does not match any option number.');
+                        }
+
                         $quiz = Quiz::create([
                             'course_id' => $courseId,
                             'question_text' => $row['question'],
                         ]);
 
-                        $correctIndices = explode(',', $row['correct_options']);
-                        $correctIndices = array_map('trim', $correctIndices);
-
-                        // Dynamic options
-                        for ($i = 1; $i <= 10; $i++) {
-                            $key = "option_{$i}";
-                            if (isset($row[$key]) && !empty(trim($row[$key]))) {
-                                QuizOption::create([
-                                    'quiz_id' => $quiz->id,
-                                    'option_text' => trim($row[$key]),
-                                    'is_correct' => in_array((string)$i, $correctIndices),
-                                ]);
-                            }
+                        foreach ($options as $option) {
+                            QuizOption::create([
+                                'quiz_id' => $quiz->id,
+                                'option_text' => $option['option_text'],
+                                'is_correct' => $option['is_correct'],
+                            ]);
                         }
                         $results['success_count']++;
                     });

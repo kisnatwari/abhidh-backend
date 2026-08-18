@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Plus, Download, Trash2, CheckCircle2, Settings, Timer } from 'lucide-react';
+import { Upload, Plus, Download, Trash2, CheckCircle2, Settings, Timer, Pencil } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -41,6 +41,8 @@ export default function QuizIndex({ course, quizzes, upload_report, flash }: Pag
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [isManualOpen, setIsManualOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editingQuizId, setEditingQuizId] = useState<number | null>(null);
 
     const { data, setData, post, processing, reset, errors } = useForm({
         course_id: course.id,
@@ -50,6 +52,44 @@ export default function QuizIndex({ course, quizzes, upload_report, flash }: Pag
             { option_text: '', is_correct: false },
         ]
     });
+
+    const editForm = useForm<{ question_text: string; options: Option[] }>({
+        question_text: '',
+        options: [],
+    });
+
+    const openEditDialog = (q: Quiz) => {
+        setEditingQuizId(q.id);
+        editForm.setData({
+            question_text: q.question_text,
+            options: q.options.map(o => ({ id: o.id, option_text: o.option_text, is_correct: o.is_correct })),
+        });
+        editForm.clearErrors();
+        setIsEditOpen(true);
+    };
+
+    const addEditOption = () => editForm.setData('options', [...editForm.data.options, { option_text: '', is_correct: false }]);
+
+    const removeEditOption = (i: number) => {
+        if (editForm.data.options.length <= 2) return;
+        editForm.setData('options', editForm.data.options.filter((_, idx) => idx !== i));
+    };
+
+    const handleEditSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingQuizId) return;
+        editForm.post(QuizController.update.url(editingQuizId), {
+            onSuccess: () => {
+                setIsEditOpen(false);
+                setEditingQuizId(null);
+                editForm.reset();
+            },
+            onError: (errs) => {
+                console.error("Update Errors:", errs);
+                alert("Failed to save question. Check console or make sure all option texts are filled.");
+            }
+        });
+    };
 
     const settingsForm = useForm({
         quiz_time_limit_minutes: course.quiz_time_limit_minutes ?? 0,
@@ -271,15 +311,16 @@ export default function QuizIndex({ course, quizzes, upload_report, flash }: Pag
                     <Table>
                         <TableHeader className="bg-muted/50">
                             <TableRow>
-                                <TableHead className="w-[40%]">Question</TableHead>
-                                <TableHead className="w-[50%]">Options & Correct Answers</TableHead>
+                                <TableHead className="w-[35%]">Question</TableHead>
+                                <TableHead className="w-[45%]">Options & Correct Answers</TableHead>
+                                <TableHead className="text-right">Edit Quiz</TableHead>
                                 <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {quizzes.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center py-10 text-muted-foreground">
+                                    <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
                                         No questions found. Add some to start the quiz.
                                     </TableCell>
                                 </TableRow>
@@ -300,6 +341,11 @@ export default function QuizIndex({ course, quizzes, upload_report, flash }: Pag
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right align-top py-4">
+                                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(q)}>
+                                                <Pencil className="h-4 w-4 text-primary" />
+                                            </Button>
+                                        </TableCell>
+                                        <TableCell className="text-right align-top py-4">
                                             <Button variant="ghost" size="icon" onClick={() => {
                                                 if(confirm('Are you sure you want to delete this question?')) {
                                                     router.delete(QuizController.destroy.url(q.id));
@@ -314,6 +360,69 @@ export default function QuizIndex({ course, quizzes, upload_report, flash }: Pag
                         </TableBody>
                     </Table>
                 </Card>
+
+                <Dialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if (!open) setEditingQuizId(null); }}>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader><DialogTitle>Edit Quiz Question</DialogTitle></DialogHeader>
+                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Question Text</Label>
+                                <Input value={editForm.data.question_text} onChange={e => editForm.setData('question_text', e.target.value)} required placeholder="Enter the question..." />
+                                {editForm.errors.question_text && <p className="text-sm text-red-500">{editForm.errors.question_text}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="block mb-2">Options (Check correct ones)</Label>
+                                <div className="space-y-3">
+                                    {editForm.data.options.map((opt, i) => (
+                                        <div key={opt.id ?? `new-${i}`} className="flex gap-3 items-center">
+                                            <div className="flex-1">
+                                                <Input
+                                                    value={opt.option_text}
+                                                    onChange={e => {
+                                                        const newOpts = [...editForm.data.options];
+                                                        newOpts[i].option_text = e.target.value;
+                                                        editForm.setData('options', newOpts);
+                                                    }}
+                                                    placeholder={`Option ${i + 1}`}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 text-primary rounded border-gray-300"
+                                                    checked={opt.is_correct}
+                                                    onChange={e => {
+                                                        const newOpts = [...editForm.data.options];
+                                                        newOpts[i].is_correct = e.target.checked;
+                                                        editForm.setData('options', newOpts);
+                                                    }}
+                                                />
+                                                <span className="text-sm">Correct</span>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeEditOption(i)}
+                                                disabled={editForm.data.options.length <= 2}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-red-500" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button type="button" variant="ghost" size="sm" onClick={addEditOption} className="mt-2 text-primary">
+                                    + Add Another Option
+                                </Button>
+                                {editForm.errors.options && <p className="text-sm text-red-500">{editForm.errors.options}</p>}
+                            </div>
+                            <Button type="submit" disabled={editForm.processing} className="w-full mt-6">
+                                {editForm.processing ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

@@ -73,15 +73,15 @@ html, body {
     margin-bottom: 4mm;
 }
 .logo {
-    width: 22mm;
+    width: 32mm;
     height: auto;
     display: block;
-    margin: 0 auto 2mm;
+    margin: 0 auto 3mm;
 }
 .academy-name {
-    font-size: 11pt;
+    font-size: 13pt;
     font-weight: bold;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     color: #1B3C72;
     text-transform: uppercase;
 }
@@ -92,7 +92,7 @@ html, body {
  * the divider. Adjust padding-top to shift the block up or down.
  */
 .main-block {
-    padding-top: 28mm;
+    padding-top: 10mm;
 }
 
 .cert-title {
@@ -140,15 +140,15 @@ html, body {
  */
 .footer-tbl {
     position: absolute;
-    top: 232mm;
+    top: 185mm;
     left: 29mm;
     width: 152mm;
 }
 
-/* Certificate number: ~5 mm below footer bottom (232 + 40 + 2 = 274 mm) */
+/* Certificate number: ~5 mm below footer bottom (185 + 48 + 2 = 235 mm) */
 .cert-number {
     position: absolute;
-    top: 269mm;
+    top: 235mm;
     left: 29mm;
     width: 152mm;
     text-align: right;
@@ -197,20 +197,20 @@ html, body {
     {{-- Footer: anchored by absolute position --}}
     <table class="footer-tbl" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
     <tr>
-        <td style="width: 30%; vertical-align: bottom; text-align: left; padding: 0;">
-            <div style="font-size: 9pt; font-weight: bold; color: #1a1a1a;">Duration</div>
-            <div style="font-size: 9pt; color: #555; margin-top: 1mm; margin-bottom: 5mm;">{{ $course->duration ?? 'N/A' }}</div>
+        <td style="width: 28%; vertical-align: bottom; text-align: left; padding: 0;">
+            <div style="font-size: 9pt; font-weight: bold; color: #1a1a1a;">Format</div>
+            <div style="font-size: 9pt; color: #555; margin-top: 1mm; margin-bottom: 5mm;">{{ $course->duration ?: ($course->course_type === 'self_paced' ? 'Self-Paced' : 'Guided') }}</div>
             <div style="font-size: 9pt; font-weight: bold; color: #1a1a1a;">Date</div>
             <div style="font-size: 9pt; color: #555; margin-top: 1mm;">{{ $certificate->issued_at->format('jS M, Y') }}</div>
         </td>
-        <td style="width: 40%; vertical-align: bottom; text-align: center; padding: 0;">
+        <td style="width: 38%; vertical-align: bottom; text-align: center; padding: 0;">
             <img src="{{ $sealSrc }}" style="width: 36mm; height: 36mm;" alt="Seal">
         </td>
-        <td style="width: 30%; vertical-align: bottom; text-align: right; padding: 0;">
-            <table cellpadding="0" cellspacing="0" border="0" style="width: 44mm; margin-left: auto; border-collapse: collapse;">
+        <td style="width: 34%; vertical-align: bottom; text-align: right; padding: 0;">
+            <table cellpadding="0" cellspacing="0" border="0" style="width: 54mm; margin-left: auto; border-collapse: collapse;">
             <tr>
                 <td style="padding: 0; text-align: center;">
-                    <img src="{{ $sigSrc }}" style="width: 44mm; height: auto; display: block;" alt="Signature">
+                    <img src="{{ $sigSrc }}" style="width: 54mm; height: auto; display: block;" alt="Signature">
                 </td>
             </tr>
             <tr>
